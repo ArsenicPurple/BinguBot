@@ -97,8 +97,6 @@ namespace BinguBot
             await Client.ConnectAsync();
             await lavalink.ConnectAsync(lavalinkConfig);
 
-            Client.VoiceStateUpdated += MusicCommands.VoiceStateUpdated;
-
             await Task.Delay(-1);
         }
 
