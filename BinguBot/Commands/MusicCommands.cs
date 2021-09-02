@@ -136,43 +136,11 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Searchs for the value given and adds it to the queue
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="search"></param>
-        /// <returns></returns>
-        [Command("queue")]
-        public async Task Queue(CommandContext ctx, [RemainingText] string search)
-        {
-            LavalinkNodeConnection node;
-            if ((node = GetConnection(ctx).Item1) == null)
-            {
-                await ctx.RespondAsync("You are not in a voice channel or Bingu had an oopsie");
-                return;
-            }
-
-            var loadResult = await node.Rest.GetTracksAsync(search);
-
-            if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
-            {
-                await ctx.RespondAsync($"Track search failed for {search}.");
-                return;
-            }
-
-            LavalinkTrack track = loadResult.Tracks.First();
-            queue.Add(track);
-
-            await ctx.RespondAsync($"Queued {track.Title}!");
-        }
-        [Command("q"), Hidden()]
-        public async Task Q(CommandContext ctx, [RemainingText] string search) { await Queue(ctx, search); }
-
-        /// <summary>
         /// Lists the currently playing track and all tracks in the queue.
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        [Command("queue")]
+        [Command("queue"), Aliases("q")]
         public async Task Queue(CommandContext ctx)
         {
             string content = string.Empty;
@@ -183,8 +151,6 @@ namespace BinguBot.Commands
             }
             await ctx.Channel.SendMessageAsync(content);
         }
-        [Command("q"), Hidden()]
-        public async Task Q(CommandContext ctx) { await Queue(ctx); }
 
         /// <summary>
         /// Skips the currently playing track and plays the next track in the queue. Stops player is the is nothing in the queue.
