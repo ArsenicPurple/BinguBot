@@ -2,8 +2,6 @@
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using DSharpPlus.Interactivity.Enums;
-using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using System;
 using System.Collections.Generic;
@@ -39,6 +37,56 @@ namespace BinguBot.Commands
         LavalinkGuildConnection connectedChannel;
 
         /// <summary>
+        /// Joke Command that makes the bot join a voice channel and then deafen everyone
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        [Command("boom")]
+        [RequirePermissions(Permissions.Administrator)]
+        [Hidden()]
+        public async Task Boom(CommandContext ctx)
+        {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            var channel = GetUserChannel(ctx).Result;
+            if (channel == null) { return; }
+
+            await ConnectToChannel(ctx, channel);
+
+            LavalinkNodeConnection node;
+            LavalinkGuildConnection conn;
+            if ((node = GetConnection(ctx).Item1) == null || (conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel");
+                return;
+            }
+
+            var loadResult = await node.Rest.GetTracksAsync(new Uri("https://www.youtube.com/watch?v=sFeC2yeOibg"));
+
+            var track = loadResult.Tracks.First();
+
+            await conn.PlayAsync(track);
+
+            await connectedChannel.SeekAsync(TimeSpan.FromSeconds(10d));
+
+            await Task.Delay(6000);
+
+            foreach (DiscordMember member in channel.Users)
+            {
+                await Task.Delay(100);
+                await member.SetDeafAsync(true, "Boom was very loud");
+            }
+
+            await Task.Delay(3000);
+
+            foreach (DiscordMember member in channel.Users)
+            {
+                await Task.Delay(100);
+                await member.SetDeafAsync(false);
+            }
+        }
+
+        /// <summary>
         /// Forces the bot to join the channel in which the user that invoked the command is in.
         /// </summary>
         /// <param name="ctx"></param>
@@ -48,7 +96,7 @@ namespace BinguBot.Commands
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
 
-            await ConnectToChannel(ctx, channel); 
+            await ConnectToChannel(ctx, channel);
         }
 
         /// <summary>
@@ -59,29 +107,18 @@ namespace BinguBot.Commands
         [Command("leave")]
         public async Task Leave(CommandContext ctx)
         {
-            DiscordChannel channel;
-            if ((channel = ctx.Member.VoiceState.Channel) == null)
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
             {
-                await ctx.RespondAsync("You are not currently in a Voice Channel");
+                await ctx.RespondAsync("You are not in a voice channel");
                 return;
             }
 
-            var lava = Bot.Client.GetLavalink();
-            if (!lava.ConnectedNodes.Any())
-            {
-                await ctx.RespondAsync("The Lavalink connection is not established");
-                return;
-            }
-
-            var node = lava.ConnectedNodes.Values.First();
-
-            if (channel.Type != ChannelType.Voice)
+            if (conn.Channel.Type != ChannelType.Voice)
             {
                 await ctx.RespondAsync("Not a valid voice channel.");
                 return;
             }
-
-            var conn = node.GetGuildConnection(channel.Guild);
 
             if (conn == null)
             {
@@ -93,9 +130,9 @@ namespace BinguBot.Commands
             {
                 await conn.StopAsync();
             }
-            
+
             await conn.DisconnectAsync();
-            await ctx.RespondAsync($"Left {channel.Name}!");
+            await ctx.RespondAsync($"Left {conn.Channel.Name}!");
         }
 
         /// <summary>
@@ -115,7 +152,7 @@ namespace BinguBot.Commands
             }
 
             var loadResult = await node.Rest.GetTracksAsync(search);
-            
+
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
             {
                 await ctx.RespondAsync($"Track search failed for {search}.");
@@ -127,6 +164,8 @@ namespace BinguBot.Commands
 
             await ctx.RespondAsync($"Queued {track.Title}!");
         }
+        [Command("q"), Hidden()]
+        public async Task Q(CommandContext ctx, [RemainingText] string search) { await Queue(ctx, search); }
 
         /// <summary>
         /// Lists the currently playing track and all tracks in the queue.
@@ -134,7 +173,6 @@ namespace BinguBot.Commands
         /// <param name="ctx"></param>
         /// <returns></returns>
         [Command("queue")]
-        [Aliases("q")]
         public async Task Queue(CommandContext ctx)
         {
             string content = string.Empty;
@@ -145,6 +183,8 @@ namespace BinguBot.Commands
             }
             await ctx.Channel.SendMessageAsync(content);
         }
+        [Command("q"), Hidden()]
+        public async Task Q(CommandContext ctx) { await Queue(ctx); }
 
         /// <summary>
         /// Skips the currently playing track and plays the next track in the queue. Stops player is the is nothing in the queue.
@@ -197,7 +237,6 @@ namespace BinguBot.Commands
         /// <param name="search"></param>
         /// <returns></returns>
         [Command("play")]
-        [Aliases("p")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
             var channel = GetUserChannel(ctx).Result;
@@ -234,6 +273,8 @@ namespace BinguBot.Commands
 
             await ctx.RespondAsync($"Now playing {track.Title}!");
         }
+        [Command("p"), Hidden()]
+        public async Task P(CommandContext ctx, [RemainingText] string search) { await Play(ctx, search); }
 
         /// <summary>
         /// Searches for the url given and plays it. Queues the track if a track is already playing.
@@ -278,6 +319,8 @@ namespace BinguBot.Commands
 
             await ctx.RespondAsync($"Now playing {track.Title}!");
         }
+        [Command("p"), Hidden()]
+        public async Task P(CommandContext ctx, Uri url) { await Play(ctx, url); }
 
         /// <summary>
         /// Pauses the currently playing track.
@@ -325,6 +368,25 @@ namespace BinguBot.Commands
             }
 
             await conn.ResumeAsync();
+        }
+
+        [Command("seek")]
+        public async Task Seek(CommandContext ctx, int seconds)
+        {
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel");
+                return;
+            }
+
+            if (conn.CurrentState.CurrentTrack == null)
+            {
+                await ctx.RespondAsync("There are no tracks loaded.");
+                return;
+            }
+
+            await conn.SeekAsync(TimeSpan.FromSeconds(seconds));
         }
 
         //Mark:-- Utility Methods
@@ -382,6 +444,7 @@ namespace BinguBot.Commands
         private async Task VoiceStateUpdated(DiscordClient sender, VoiceStateUpdateEventArgs e)
         {
             var newChannel = e.After.Channel;
+            if (e.Before.Channel == null) { return; }
             if (e.Before.Channel.Id != newChannel.Id)
             {
                 await ConnectToChannel(null, newChannel);

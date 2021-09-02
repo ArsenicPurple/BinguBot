@@ -6,12 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="bin\NewFolder\**" />
-    <EmbeddedResource Remove="bin\NewFolder\**" />
-    <None Remove="bin\NewFolder\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="bin\Debug\netcoreapp3.1\config.json">
       <SubType>Component</SubType>
     </None>
