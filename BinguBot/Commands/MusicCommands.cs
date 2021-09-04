@@ -32,6 +32,8 @@ namespace BinguBot.Commands
         /// </summary>
         List<LavalinkTrack> queue = new List<LavalinkTrack>();
 
+        bool IsLooping;
+
         /// <summary>
         /// Joke Command that makes the bot join a voice channel and then deafen everyone
         /// </summary>
@@ -127,6 +129,7 @@ namespace BinguBot.Commands
             if (conn.CurrentState.CurrentTrack != null)
             {
                 await conn.StopAsync();
+                await Task.Delay(100);
             }
 
             await conn.DisconnectAsync();
@@ -141,6 +144,7 @@ namespace BinguBot.Commands
         [Command("queue"), Aliases("q")]
         public async Task Queue(CommandContext ctx)
         {
+            Debug.WriteLine("tried to display queue");
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -151,7 +155,7 @@ namespace BinguBot.Commands
             string content = string.Empty;
             content += "```";
             content += "Playing: " + conn.CurrentState.CurrentTrack.Title + "\n";
-            for (int i = 0; i < queue.Count - 1; i++)
+            for (int i = 0; i < queue.Count; i++)
             {
                 content += queue[i].Title + "\n";
             }
@@ -174,14 +178,14 @@ namespace BinguBot.Commands
                 return;
             }
 
-            if (queue.Count > 0)
+            if (queue.Count != 0)
             {
-                await conn.PlayAsync(queue.First());
                 queue.RemoveAt(0);
-            } else
-            {
-                await conn.StopAsync();
+                await conn.PlayAsync(queue.First());
+                return;
             }
+
+            await conn.StopAsync();
         }
 
         /// <summary>
@@ -235,15 +239,15 @@ namespace BinguBot.Commands
 
             var track = loadResult.Tracks.First();
 
-            if (conn.CurrentState.CurrentTrack != null)
+            if (queue.Count != 0)
             {
                 queue.Add(track);
                 await ctx.RespondAsync($"Queued {track.Title}!");
                 return;
             }
 
+            queue.Add(track);
             await conn.PlayAsync(track);
-
             await ctx.RespondAsync($"Now playing {track.Title}!");
         }
         [Command("p"), Hidden()]
@@ -281,15 +285,15 @@ namespace BinguBot.Commands
 
             var track = loadResult.Tracks.First();
 
-            if (conn.CurrentState.CurrentTrack != null)
+            if (queue.Count != 0)
             {
                 queue.Add(track);
                 await ctx.RespondAsync($"Queued {track.Title}!");
                 return;
             }
 
+            queue.Add(track);
             await conn.PlayAsync(track);
-
             await ctx.RespondAsync($"Now playing {track.Title}!");
         }
         [Command("p"), Hidden()]
@@ -343,6 +347,12 @@ namespace BinguBot.Commands
             await conn.ResumeAsync();
         }
 
+        /// <summary>
+        /// Skips to the timestamp in seconds given in the currently playing song.
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="seconds"></param>
+        /// <returns></returns>
         [Command("seek")]
         public async Task Seek(CommandContext ctx, int seconds)
         {
@@ -360,6 +370,15 @@ namespace BinguBot.Commands
             }
 
             await conn.SeekAsync(TimeSpan.FromSeconds(seconds));
+        }
+
+        /// <summary>
+        /// Toggles looping on the currently playing song.
+        /// </summary>
+        [Command("loop")]
+        public void Loop()
+        {
+            IsLooping = !IsLooping;
         }
 
         //Mark:-- Utility Methods
@@ -410,9 +429,11 @@ namespace BinguBot.Commands
 
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
         {
+            if (IsLooping) { await sender.PlayAsync(queue.First()); }
             if (queue.Count == 0) { return; }
-            await sender.PlayAsync(queue.First());
+
             queue.RemoveAt(0);
+            await sender.PlayAsync(queue.First());
         }
 
         /*
