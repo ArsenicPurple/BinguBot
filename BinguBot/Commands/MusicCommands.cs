@@ -14,27 +14,23 @@ using DSharpPlus.EventArgs;
 namespace BinguBot.Commands
 {
     /** TODO
-     * Refactor for consistency and efficiency
+     * 
      * 
      * 
      */
     class MusicCommands : BaseCommandModule
     {
+        /*
         public MusicCommands()
         {
-            /// Adds the "VoiceStateUpdated" Method to same listener.
             Bot.Client.VoiceStateUpdated += VoiceStateUpdated;
         }
+        */
 
         /// <summary>
         /// Queue of all tracks. Excludes the currently playing track.
         /// </summary>
         List<LavalinkTrack> queue = new List<LavalinkTrack>();
-
-        /// <summary>
-        /// Current Guild channel connection
-        /// </summary>
-        LavalinkGuildConnection connectedChannel;
 
         /// <summary>
         /// Joke Command that makes the bot join a voice channel and then deafen everyone
@@ -61,13 +57,15 @@ namespace BinguBot.Commands
                 return;
             }
 
-            var loadResult = await node.Rest.GetTracksAsync(new Uri("https://www.youtube.com/watch?v=sFeC2yeOibg"));
+            var loadResult = await node.Rest.GetTracksAsync(new Uri("https://www.youtube.com/watch?v=Q_nkDG_qT34"));
+            var loadResult2 = await node.Rest.GetTracksAsync(new Uri("https://www.youtube.com/watch?v=MdO3_r6juRU"));
 
             var track = loadResult.Tracks.First();
+            var track2 = loadResult2.Tracks.First();
+
+            queue.Add(track2);
 
             await conn.PlayAsync(track);
-
-            await connectedChannel.SeekAsync(TimeSpan.FromSeconds(10d));
 
             await Task.Delay(6000);
 
@@ -143,12 +141,21 @@ namespace BinguBot.Commands
         [Command("queue"), Aliases("q")]
         public async Task Queue(CommandContext ctx)
         {
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel or Bingu had an oopsie");
+                return;
+            }
+
             string content = string.Empty;
-            content += "Playing: " + connectedChannel.CurrentState.CurrentTrack.Title + "\n";
+            content += "```";
+            content += "Playing: " + conn.CurrentState.CurrentTrack.Title + "\n";
             for (int i = 0; i < queue.Count - 1; i++)
             {
                 content += queue[i].Title + "\n";
             }
+            content += "```";
             await ctx.Channel.SendMessageAsync(content);
         }
 
@@ -383,7 +390,7 @@ namespace BinguBot.Commands
             return channel;
         }
 
-        public async Task ConnectToChannel(CommandContext ctx, DiscordChannel channel)
+        public async Task<LavalinkGuildConnection> ConnectToChannel(CommandContext ctx, DiscordChannel channel)
         {
             
             var lava = Bot.Client.GetLavalink();
@@ -392,12 +399,13 @@ namespace BinguBot.Commands
                 if (ctx != null) {
                     await ctx.RespondAsync("The Lavalink connection is not established");
                 }
-                return;
+                return null;
             }
 
             var node = lava.ConnectedNodes.Values.First();
-            connectedChannel = await node.ConnectAsync(channel);
-            connectedChannel.PlaybackFinished += PlaybackFinished;
+            var conn = await node.ConnectAsync(channel);
+            conn.PlaybackFinished += PlaybackFinished;
+            return conn;
         }
 
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
@@ -407,14 +415,15 @@ namespace BinguBot.Commands
             queue.RemoveAt(0);
         }
 
-        private async Task VoiceStateUpdated(DiscordClient sender, VoiceStateUpdateEventArgs e)
+        /*
+        private Task VoiceStateUpdated(DiscordClient sender, VoiceStateUpdateEventArgs e)
         {
-            var newChannel = e.After.Channel;
-            if (e.Before.Channel == null) { return; }
-            if (e.Before.Channel.Id != newChannel.Id)
+            if (e.Before.Channel == null) { return Task.CompletedTask; }
+            if (e.Before.Channel.Id != e.After.Channel.Id)
             {
-                await ConnectToChannel(null, newChannel);
+                connectedChannel. = e.After.Channel;
             }
         }
+        */
     }
 }

@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>BinguBot</id>
+    <version>1.0.0</version>
+    <authors>BinguBot</authors>
+    <owners>BinguBot</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Package Description</description>
+    <dependencies>
+      <group targetFramework=".NETCoreApp3.1">
+        <dependency id="DSharpPlus" version="4.1.0" exclude="Build,Analyzers" />
+        <dependency id="DSharpPlus.CommandsNext" version="4.1.0" exclude="Build,Analyzers" />
+        <dependency id="DSharpPlus.Interactivity" version="4.1.0" exclude="Build,Analyzers" />
+        <dependency id="DSharpPlus.Lavalink" version="4.1.0" exclude="Build,Analyzers" />
+        <dependency id="System.Collections" version="4.3.0" exclude="Build,Analyzers" />
+        <dependency id="System.Drawing.Common" version="5.0.2" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\BinguBot.runtimeconfig.json" target="lib\netcoreapp3.1\BinguBot.runtimeconfig.json" />
+    <file src="C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\BinguBot.dll" target="lib\netcoreapp3.1\BinguBot.dll" />
+  </files>
+</package>
