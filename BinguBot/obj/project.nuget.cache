@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "oYBc5uBkgGR7VQmPNzADrp0WeAmsA0WHREHDB1xF7Yk0/N4xShXvljgHtm4gl8gkWjYT4XO3+JENrvPdlaXr3A==",
+  "dgSpecHash": "YSQY8RoQ2twqXh1HB9L2QMdrdvJ5XEluWon1cQ8JHon/1Tx+DWnSxKxAT2ulYcc6hZGy0KmKrRGog2KgvBniVA==",
   "success": true,
   "projectFilePath": "C:\\Users\\samcr\\source\\repos\\BinguBot\\BinguBot\\BinguBot.csproj",
   "expectedPackageFiles": [
@@ -37,6 +37,7 @@
     "C:\\Users\\samcr\\.nuget\\packages\\system.collections\\4.3.0\\system.collections.4.3.0.nupkg.sha512",
     "C:\\Users\\samcr\\.nuget\\packages\\system.collections.concurrent\\4.3.0\\system.collections.concurrent.4.3.0.nupkg.sha512",
     "C:\\Users\\samcr\\.nuget\\packages\\system.collections.immutable\\5.0.0\\system.collections.immutable.5.0.0.nupkg.sha512",
+    "C:\\Users\\samcr\\.nuget\\packages\\system.collections.nongeneric\\4.3.0\\system.collections.nongeneric.4.3.0.nupkg.sha512",
     "C:\\Users\\samcr\\.nuget\\packages\\system.diagnostics.debug\\4.3.0\\system.diagnostics.debug.4.3.0.nupkg.sha512",
     "C:\\Users\\samcr\\.nuget\\packages\\system.diagnostics.diagnosticsource\\4.3.0\\system.diagnostics.diagnosticsource.4.3.0.nupkg.sha512",
     "C:\\Users\\samcr\\.nuget\\packages\\system.diagnostics.tracing\\4.3.0\\system.diagnostics.tracing.4.3.0.nupkg.sha512",

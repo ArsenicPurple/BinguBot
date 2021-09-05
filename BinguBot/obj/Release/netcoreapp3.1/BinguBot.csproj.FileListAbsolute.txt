@@ -24,8 +24,8 @@ C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\runtimes
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csprojAssemblyReference.cache
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.AssemblyInfoInputs.cache
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.AssemblyInfo.cs
-C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csproj.CoreCompileInputs.cache
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csproj.CopyComplete
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.dll
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.pdb
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.genruntimeconfig.cache
+C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csproj.CoreCompileInputs.cache
