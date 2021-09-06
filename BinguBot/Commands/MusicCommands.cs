@@ -21,12 +21,10 @@ namespace BinguBot.Commands
      */
     class MusicCommands : BaseCommandModule
     {
-        /*
         public MusicCommands()
         {
-            Bot.Client.VoiceStateUpdated += VoiceStateUpdated;
+            //Bot.Client.VoiceStateUpdated += VoiceStateUpdated;
         }
-        */
 
         /// <summary>
         /// Queue of all tracks. Excludes the currently playing track.
@@ -34,6 +32,8 @@ namespace BinguBot.Commands
         Queue<LavalinkTrack> queue = new Queue<LavalinkTrack>();
 
         bool IsLooping;
+
+        DateTime LastTimeBoomed = DateTime.MinValue;
 
         /// <summary>
         /// Joke Command that makes the bot join a voice channel and then deafen everyone
@@ -51,6 +51,9 @@ namespace BinguBot.Commands
             if (channel == null) { return; }
 
             await ConnectToChannel(ctx, channel);
+
+            if (LastTimeBoomed.Hour + 1 > DateTime.Now.Hour) { return; }
+            LastTimeBoomed = DateTime.Now;
 
             LavalinkNodeConnection node;
             LavalinkGuildConnection conn;
@@ -86,7 +89,6 @@ namespace BinguBot.Commands
                 queue.Enqueue(track2);
             }
 
-
             await conn.PlayAsync(track);
 
             await Task.Delay(6000);
@@ -104,6 +106,29 @@ namespace BinguBot.Commands
                 await Task.Delay(100);
                 await member.SetDeafAsync(false);
             }
+        }
+
+        [Command("rtt")]
+        [Hidden()]
+        public async Task RapTapTap(CommandContext ctx)
+        {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            var channel = GetUserChannel(ctx).Result;
+            if (channel == null) { return; }
+
+            await ConnectToChannel(ctx, channel);
+
+            LavalinkNodeConnection node;
+            LavalinkGuildConnection conn;
+            if ((node = GetConnection(ctx).Item1) == null || (conn = GetConnection(ctx).Item2) == null)
+            {
+                return;
+            }
+
+            var loadResult = await node.Rest.GetTracksAsync(new Uri("https://youtu.be/3F88-fIMk54"));
+            var track = loadResult.Tracks.First();
+            await conn.PlayAsync(track);
         }
 
         /// <summary>
