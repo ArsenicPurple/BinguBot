@@ -23,7 +23,6 @@ namespace BinguBot.Commands
     {
         public MusicCommands()
         {
-            //Bot.Client.VoiceStateUpdated += VoiceStateUpdated;
         }
 
         /// <summary>
@@ -231,13 +230,15 @@ namespace BinguBot.Commands
                 return;
             }
 
-            if (IsPlaying(conn) && !QueueIsEmpty())
+            Debug.WriteLine("Skipped");
+
+            if (QueueIsEmpty())
             {
-                await conn.PlayAsync(queue.Dequeue());
+                await conn.StopAsync();
                 return;
             }
 
-            await conn.StopAsync();
+            await conn.PlayAsync(queue.Dequeue());
         }
 
         /// <summary>
@@ -431,23 +432,23 @@ namespace BinguBot.Commands
         [Command("remove")]
         public async Task Remove(CommandContext ctx, int index)
         {
-            var qArray = queue.ToArray();
+            var qList = queue.ToList();
+            var title = qList[index - 1].Title;
             try
             {
-                var test = qArray[index];
+                qList.RemoveAt(index - 1);
             }
-            catch(IndexOutOfRangeException)
+            catch(ArgumentOutOfRangeException)
             {
-                await ctx.RespondAsync($"There is no track at position {index}");
-                return;
+                await ctx.RespondAsync($"There is no track at postion {index}");
             }
-
+            
             Queue<LavalinkTrack> tmp = new Queue<LavalinkTrack>();
-            for (int i = 0; i < qArray.Length; i++)
+            foreach (LavalinkTrack track in qList)
             {
-                if (i != index) { continue; }
-                tmp.Enqueue(qArray[i]);
+                tmp.Enqueue(track);
             }
+            await ctx.RespondAsync($"Removed {title}");
             queue = tmp;
         }
 
@@ -469,6 +470,7 @@ namespace BinguBot.Commands
         }
 
         //Mark:-- Utility Methods
+
         /// <summary>
         /// Gets the connection of the member the invoked the command in context.
         /// </summary>
@@ -532,16 +534,5 @@ namespace BinguBot.Commands
         {
             return queue.Count == 0;
         }
-
-        /*
-        private Task VoiceStateUpdated(DiscordClient sender, VoiceStateUpdateEventArgs e)
-        {
-            if (e.Before.Channel == null) { return Task.CompletedTask; }
-            if (e.Before.Channel.Id != e.After.Channel.Id)
-            {
-                connectedChannel. = e.After.Channel;
-            }
-        }
-        */
     }
 }

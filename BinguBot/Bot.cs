@@ -74,6 +74,7 @@ namespace BinguBot
             //Commands.RegisterCommands<MCCommands>();
             //Commands.RegisterCommands<DestinyCommands>();
 
+
             Commands.RegisterCommands<TestCommands>();
             Commands.RegisterCommands<MusicCommands>();
 
