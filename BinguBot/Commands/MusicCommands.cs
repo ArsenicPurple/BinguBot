@@ -238,7 +238,7 @@ namespace BinguBot.Commands
                 return;
             }
 
-            await conn.PlayAsync(queue.Dequeue());
+            await conn.StopAsync();
         }
 
         /// <summary>
@@ -256,8 +256,9 @@ namespace BinguBot.Commands
                 return;
             }
 
-            await conn.StopAsync();
+            await conn.PauseAsync();
             queue.Clear();
+            await conn.StopAsync();
         }
 
         /// <summary>
@@ -485,6 +486,11 @@ namespace BinguBot.Commands
             return (node, conn);
         }
 
+        /// <summary>
+        /// Gets the user channel. Returns null if the user is not in a channel.
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
         public async Task<DiscordChannel> GetUserChannel(CommandContext ctx)
         {
             DiscordChannel channel;
@@ -498,6 +504,12 @@ namespace BinguBot.Commands
             return channel;
         }
 
+        /// <summary>
+        /// Connects to the given channel and add the playback finished event handler to the connection.
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="channel"></param>
+        /// <returns></returns>
         public async Task<LavalinkGuildConnection> ConnectToChannel(CommandContext ctx, DiscordChannel channel)
         {
             
@@ -516,6 +528,12 @@ namespace BinguBot.Commands
             return conn;
         }
 
+        /// <summary>
+        /// Runs on playback finished. Checks if the track should loop and then plays the next song accordingly.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
         {
             if (IsLooping) { await sender.PlayAsync(queue.Peek()); }
@@ -525,11 +543,20 @@ namespace BinguBot.Commands
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Checks whether there is a song currently playing.
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <returns></returns>
         private bool IsPlaying(LavalinkGuildConnection conn)
         {
             return conn.CurrentState.CurrentTrack != null;
         }
 
+        /// <summary>
+        /// Checks if the song queue is empty.
+        /// </summary>
+        /// <returns></returns>
         private bool QueueIsEmpty()
         {
             return queue.Count == 0;

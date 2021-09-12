@@ -2,9 +2,9 @@
   <MonoDevelop.Ide.Workbench ActiveDocument="BinguBot/Commands/MusicCommands.cs">
     <Files>
       <File FileName="BinguBot/Commands/MusicCommands.cs" Line="335" Column="22" />
-      <File FileName="BinguBot/Bot.cs" Line="96" Column="1" />
-      <File FileName="BinguBot/Commands/MCCommands.cs" Line="1" Column="1" />
-      <File FileName="BinguBot/Json/config.json" Line="1" Column="1" />
+      <File FileName="BinguBot/Bot.cs" />
+      <File FileName="BinguBot/Commands/MCCommands.cs" />
+      <File FileName="BinguBot/Json/config.json" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
