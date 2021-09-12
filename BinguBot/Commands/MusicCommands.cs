@@ -230,14 +230,6 @@ namespace BinguBot.Commands
                 return;
             }
 
-            Debug.WriteLine("Skipped");
-
-            if (QueueIsEmpty())
-            {
-                await conn.StopAsync();
-                return;
-            }
-
             await conn.StopAsync();
         }
 
@@ -539,6 +531,7 @@ namespace BinguBot.Commands
             if (IsLooping) { await sender.PlayAsync(queue.Peek()); }
             if (QueueIsEmpty()) { return; }
 
+            Debug.WriteLine("Playback Finished");
             await sender.PlayAsync(queue.Dequeue());
             e.Handled = true;
         }
