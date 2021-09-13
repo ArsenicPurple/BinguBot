@@ -34,57 +34,5 @@ namespace BinguBot.Commands
             await Task.Delay(delay);
             await m.DeleteAsync();
         }
-
-        [Command("Vote")]
-        public async Task Vote(CommandContext ctx, int options)
-        {
-            if (options > 10)
-            {
-                var errorMessage = await ctx.Channel.SendMessageAsync("Parameter is to large. \"options\" int parameter must be 10 or less");
-
-                await Task.Delay(5000);
-
-                await ctx.Channel.DeleteMessageAsync(errorMessage);
-                return;
-            }
-
-            var voteEmbed = new DiscordEmbedBuilder
-            {
-                Title = "Vote"
-            };
-
-            var voteMessage = await ctx.Channel.SendMessageAsync(embed: voteEmbed).ConfigureAwait(false);
-
-            DiscordEmoji[] reactions = new DiscordEmoji[options];
-
-            for (int i = 0; i < reactions.Length; i++)
-            {
-                string emoji = Converter.IntEmoji(i);
-                reactions[i] = DiscordEmoji.FromName(Bot.Client, emoji);
-
-                await voteMessage.CreateReactionAsync(reactions[i]).ConfigureAwait(false);
-            }
-
-            var interactivity = Bot.Client.GetInteractivity();
-
-            var delay = TimeSpan.FromSeconds(5);
-            var behaviour = PollBehaviour.DeleteEmojis;
-
-            var results = await interactivity.DoPollAsync(voteMessage, reactions, behaviour, delay);
-
-            var resultsEmbed = new DiscordEmbedBuilder
-            {
-                Title = "Results:"
-            };
-
-            foreach (var result in results)
-            {
-                string resultLine = result.Emoji + " : " + result.Total + "\n";
-                resultsEmbed.Description += resultLine;
-            }
-
-            await ctx.Channel.DeleteMessageAsync(voteMessage);
-            await ctx.Channel.SendMessageAsync(embed: resultsEmbed);
-        }
     }
 }
