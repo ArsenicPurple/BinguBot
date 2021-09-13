@@ -37,14 +37,6 @@ namespace BinguBot
 
             var configJson = JsonConvert.DeserializeObject<ConfigJson>(json);
 
-            using (var fs = File.OpenRead("key.json"))
-            {
-                using (var sr = new StreamReader(fs, new UTF8Encoding(false)))
-                {
-                    json = await sr.ReadToEndAsync().ConfigureAwait(false);
-                }
-            }
-
             var config = new DiscordConfiguration
             {
                 Token = configJson.Token,
@@ -70,10 +62,6 @@ namespace BinguBot
             };
 
             Commands = Client.UseCommandsNext(commandsConfig);
-
-            //Commands.RegisterCommands<MCCommands>();
-            //Commands.RegisterCommands<DestinyCommands>();
-
 
             Commands.RegisterCommands<TestCommands>();
             Commands.RegisterCommands<MusicCommands>();

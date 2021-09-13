@@ -32,6 +32,9 @@ namespace BinguBot.Commands
 
         bool IsLooping;
 
+        /// <summary>
+        /// The last time the boom command was sucsessfully executed.
+        /// </summary>
         DateTime LastTimeBoomed = DateTime.MinValue;
 
         /// <summary>
@@ -460,6 +463,12 @@ namespace BinguBot.Commands
             {
                 await ctx.RespondAsync("Bingu will no longer loop the currently playing track");
             }
+        }
+
+        [Command("funkify")]
+        public async Task Funk(CommandContext ctx)
+        {
+            throw new NotImplementedException();
         }
 
         //Mark:-- Utility Methods

@@ -4530,31 +4530,29 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\samcr\\.nuget\\packages\\": {}
+    "/Users/samueldevers/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\samcr\\source\\repos\\BinguBot\\BinguBot\\BinguBot.csproj",
+      "projectUniqueName": "/Users/samueldevers/Documents/GitHub/BinguBot/BinguBot/BinguBot.csproj",
       "projectName": "BinguBot",
-      "projectPath": "C:\\Users\\samcr\\source\\repos\\BinguBot\\BinguBot\\BinguBot.csproj",
-      "packagesPath": "C:\\Users\\samcr\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\samcr\\source\\repos\\BinguBot\\BinguBot\\obj\\",
+      "projectPath": "/Users/samueldevers/Documents/GitHub/BinguBot/BinguBot/BinguBot.csproj",
+      "packagesPath": "/Users/samueldevers/.nuget/packages/",
+      "outputPath": "/Users/samueldevers/Documents/GitHub/BinguBot/BinguBot/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\samcr\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "/Users/samueldevers/.config/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "netcoreapp3.1"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://nuget.emzi0767.com/api/v3/index.json": {}
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "projectReferences": {}
         }
       },
@@ -4566,6 +4564,7 @@
     },
     "frameworks": {
       "netcoreapp3.1": {
+        "targetAlias": "netcoreapp3.1",
         "dependencies": {
           "DSharpPlus": {
             "target": "Package",
@@ -4615,7 +4614,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.301\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/5.0.400/RuntimeIdentifierGraph.json"
       }
     }
   }

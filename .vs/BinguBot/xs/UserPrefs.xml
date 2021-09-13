@@ -1,19 +1,19 @@
 ﻿<Properties GitUserInfo="UsingGIT" StartupConfiguration="{E226AE23-5C72-43FF-9DF3-ED23334C8A16}|Default">
-  <MonoDevelop.Ide.Workbench ActiveDocument="BinguBot/Commands/MusicCommands.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="BinguBot/Bot.cs">
     <Files>
-      <File FileName="BinguBot/Commands/MusicCommands.cs" Line="335" Column="22" />
-      <File FileName="BinguBot/Bot.cs" />
-      <File FileName="BinguBot/Commands/MCCommands.cs" />
+      <File FileName="BinguBot/Commands/MusicCommands.cs" Line="96" Column="14" />
+      <File FileName="BinguBot/Bot.cs" Line="70" Column="15" />
       <File FileName="BinguBot/Json/config.json" />
+      <File FileName="BinguBot/Commands/TestCommands.cs" Line="38" Column="26" />
+      <File FileName="BinguBot/Program.cs" Line="9" Column="10" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="BinguBot" expanded="True">
             <Node name="BinguBot" expanded="True">
-              <Node name="Commands" expanded="True">
-                <Node name="MusicCommands.cs" selected="True" />
-              </Node>
+              <Node name="Commands" expanded="True" />
+              <Node name="Bot.cs" selected="True" />
             </Node>
           </Node>
         </State>
