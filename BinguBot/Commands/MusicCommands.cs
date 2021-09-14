@@ -15,22 +15,24 @@ using System.Collections;
 namespace BinguBot.Commands
 {
     /** TODO
-     * 
+     * Refactor to support multiple servers
      * 
      * 
      */
     class MusicCommands : BaseCommandModule
     {
+        Dictionary<ulong, Queue<LavalinkTrack>> QueueDict = new Dictionary<ulong, Queue<LavalinkTrack>>();
+
+        Dictionary<ulong, bool> LoopingDict = new Dictionary<ulong, bool>();
+
+        Dictionary<ulong, DateTime> IdleDict = new Dictionary<ulong, DateTime>();
+
         public MusicCommands()
         {
+            Bot.Client.GuildDownloadCompleted += GuildDownloadCompleted;
+            Bot.Client.Heartbeated += Heartbeated;
+            Debug.WriteLine("Music Commands Initialized");
         }
-
-        /// <summary>
-        /// Queue of all tracks. Excludes the currently playing track.
-        /// </summary>
-        Queue<LavalinkTrack> queue = new Queue<LavalinkTrack>();
-
-        bool IsLooping;
 
         [Command("rtt")]
         [Hidden()]
@@ -106,13 +108,14 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Lists the currently playing track and all tracks in the queue.
+        /// Lists the currently playing track and all tracks in the QueueDict[key].
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
         [Command("queue"), Aliases("q")]
         public async Task Queue(CommandContext ctx)
         {
+            var key = ctx.Guild.Id;
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -120,13 +123,13 @@ namespace BinguBot.Commands
                 return;
             }
 
-            if (QueueIsEmpty())
+            if (QueueIsEmpty(key))
             {
                 await ctx.RespondAsync("There is nothing in the queue");
                 return;
             }
 
-            var qArray = queue.ToArray();
+            var qArray = QueueDict[key].ToArray();
 
             string content = string.Empty;
             content += "```";
@@ -141,7 +144,7 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Skips the currently playing track and plays the next track in the queue. Stops player is the is nothing in the queue.
+        /// Skips the currently playing track and plays the next track in the QueueDict[key]. Stops player is the is nothing in the QueueDict[key].
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
@@ -159,13 +162,14 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Stops the currently playing track and clear the queue.
+        /// Stops the currently playing track and clear the QueueDict[key].
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
         [Command("clear")]
         public async Task Clear(CommandContext ctx)
         {
+            var key = ctx.Guild.Id;
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -174,7 +178,7 @@ namespace BinguBot.Commands
             }
 
             await conn.PauseAsync();
-            queue.Clear();
+            QueueDict[key].Clear();
             await conn.StopAsync();
         }
 
@@ -187,6 +191,7 @@ namespace BinguBot.Commands
         [Command("play")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
+            var key = ctx.Guild.Id;
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
 
@@ -212,7 +217,7 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
-                queue.Enqueue(track);
+                QueueDict[key].Enqueue(track);
                 await ctx.RespondAsync($"Queued {track.Title}!");
                 return;
             }
@@ -232,6 +237,7 @@ namespace BinguBot.Commands
         [Command("play")]
         public async Task Play(CommandContext ctx, Uri url)
         {
+            var key = ctx.Guild.Id;
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
 
@@ -257,7 +263,7 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
-                queue.Enqueue(track);
+                QueueDict[key].Enqueue(track);
                 await ctx.RespondAsync($"Queued {track.Title}!");
                 return;
             }
@@ -350,7 +356,8 @@ namespace BinguBot.Commands
         [Command("remove")]
         public async Task Remove(CommandContext ctx, int index)
         {
-            var qList = queue.ToList();
+            var key = ctx.Guild.Id;
+            var qList = QueueDict[key].ToList();
             var title = qList[index - 1].Title;
             try
             {
@@ -367,7 +374,7 @@ namespace BinguBot.Commands
                 tmp.Enqueue(track);
             }
             await ctx.RespondAsync($"Removed {title}");
-            queue = tmp;
+            QueueDict[key] = tmp;
         }
 
         /// <summary>
@@ -376,8 +383,9 @@ namespace BinguBot.Commands
         [Command("loop")]
         public async Task Loop(CommandContext ctx)
         {
-            IsLooping = !IsLooping;
-            if (IsLooping)
+            var key = ctx.Guild.Id;
+            LoopingDict[key] = !LoopingDict[key];
+            if (LoopingDict[key])
             {
                 await ctx.RespondAsync("Bingu will now loop the currently playing track");
             }
@@ -388,6 +396,7 @@ namespace BinguBot.Commands
         }
 
         [Command("funkify")]
+        [Hidden()]
         public async Task Funk(CommandContext ctx)
         {
             throw new NotImplementedException();
@@ -435,7 +444,6 @@ namespace BinguBot.Commands
         /// <returns></returns>
         public async Task<LavalinkGuildConnection> ConnectToChannel(CommandContext ctx, DiscordChannel channel)
         {
-            
             var lava = Bot.Client.GetLavalink();
             if (!lava.ConnectedNodes.Any())
             {
@@ -459,12 +467,31 @@ namespace BinguBot.Commands
         /// <returns></returns>
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
         {
-            if (IsLooping) { await sender.PlayAsync(queue.Peek()); }
-            if (QueueIsEmpty()) { return; }
+            var key = sender.Guild.Id;
+            if (LoopingDict[key]) { await sender.PlayAsync(QueueDict[key].Peek()); }
+            if (QueueIsEmpty(key)) { return; }
 
             Debug.WriteLine("Playback Finished");
-            await sender.PlayAsync(queue.Dequeue());
+            await sender.PlayAsync(QueueDict[key].Dequeue());
             e.Handled = true;
+        }
+
+        private Task GuildDownloadCompleted(DiscordClient sender, GuildDownloadCompletedEventArgs e)
+        {
+            foreach(var (key, _) in e.Guilds)
+            {
+                QueueDict.Add(key, new Queue<LavalinkTrack>());
+                LoopingDict.Add(key, false);
+            }
+            e.Handled = true;
+            return Task.CompletedTask;
+        }
+
+        private Task Heartbeated(DiscordClient sender, HeartbeatEventArgs e)
+        {
+            Debug.WriteLine("Heartbeated");
+            e.Handled = true;
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -478,12 +505,12 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Checks if the song queue is empty.
+        /// Checks if the song QueueDict[key] is empty.
         /// </summary>
         /// <returns></returns>
-        private bool QueueIsEmpty()
+        private bool QueueIsEmpty(ulong key)
         {
-            return queue.Count == 0;
+            return QueueDict[key].Count == 0;
         }
     }
 }
