@@ -27,6 +27,8 @@ namespace BinguBot.Commands
 
         Dictionary<ulong, DateTime> IdleDict = new Dictionary<ulong, DateTime>();
 
+        bool GuildsDownloaded;
+
         public MusicCommands()
         {
             Bot.Client.GuildDownloadCompleted += GuildDownloadCompleted;
@@ -64,10 +66,12 @@ namespace BinguBot.Commands
         /// <returns></returns>
         [Command("join")]
         public async Task Join(CommandContext ctx) {
+            var key = ctx.Guild.Id;
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
 
             await ConnectToChannel(ctx, channel);
+            IdleDict[key] = DateTime.Now;
         }
 
         /// <summary>
@@ -191,6 +195,12 @@ namespace BinguBot.Commands
         [Command("play")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
+            if (Uri.TryCreate(search, UriKind.Absolute, out var result))
+            {
+                await Play(ctx, result);
+                return;
+            }
+
             var key = ctx.Guild.Id;
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
@@ -282,6 +292,8 @@ namespace BinguBot.Commands
         [Command("pause")]
         public async Task Pause(CommandContext ctx)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -306,6 +318,8 @@ namespace BinguBot.Commands
         [Command("resume")]
         public async Task Resume(CommandContext ctx)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -331,6 +345,8 @@ namespace BinguBot.Commands
         [Command("seek")]
         public async Task Seek(CommandContext ctx, int seconds)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -344,6 +360,9 @@ namespace BinguBot.Commands
                 return;
             }
 
+            var minutes = seconds % 60;
+            seconds -= minutes * 60;
+            await ctx.RespondAsync($"Moved to {minutes}:{seconds}");
             await conn.SeekAsync(TimeSpan.FromSeconds(seconds));
         }
 
@@ -356,6 +375,8 @@ namespace BinguBot.Commands
         [Command("remove")]
         public async Task Remove(CommandContext ctx, int index)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             var key = ctx.Guild.Id;
             var qList = QueueDict[key].ToList();
             var title = qList[index - 1].Title;
@@ -383,6 +404,8 @@ namespace BinguBot.Commands
         [Command("loop")]
         public async Task Loop(CommandContext ctx)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             var key = ctx.Guild.Id;
             LoopingDict[key] = !LoopingDict[key];
             if (LoopingDict[key])
@@ -395,12 +418,35 @@ namespace BinguBot.Commands
             }
         }
 
+        /*
         [Command("funkify")]
         [Hidden()]
-        public async Task Funk(CommandContext ctx)
+        public async Task Funk(CommandContext ctx, int id)
         {
-            throw new NotImplementedException();
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel");
+                return;
+            }
+
+            if (conn.CurrentState.CurrentTrack == null)
+            {
+                await ctx.RespondAsync("There are no tracks loaded.");
+                return;
+            }
+
+            if (id < 0 || id > 14)
+            {
+                return;
+            }
+
+            var band = new LavalinkBandAdjustment(id, 0.25f);
+            await conn.AdjustEqualizerAsync(band);
         }
+        */
 
         //Mark:-- Utility Methods
 
@@ -459,6 +505,7 @@ namespace BinguBot.Commands
             return conn;
         }
 
+
         /// <summary>
         /// Runs on playback finished. Checks if the track should loop and then plays the next song accordingly.
         /// </summary>
@@ -469,13 +516,21 @@ namespace BinguBot.Commands
         {
             var key = sender.Guild.Id;
             if (LoopingDict[key]) { await sender.PlayAsync(QueueDict[key].Peek()); }
-            if (QueueIsEmpty(key)) { return; }
-
-            Debug.WriteLine("Playback Finished");
+            if (QueueIsEmpty(key))
+            {
+                IdleDict[key] = DateTime.Now;
+                return;
+            }
             await sender.PlayAsync(QueueDict[key].Dequeue());
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Runs on Guild List Download. Fills the Queue dictionary with guild ids as keys.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private Task GuildDownloadCompleted(DiscordClient sender, GuildDownloadCompletedEventArgs e)
         {
             foreach(var (key, _) in e.Guilds)
@@ -483,13 +538,29 @@ namespace BinguBot.Commands
                 QueueDict.Add(key, new Queue<LavalinkTrack>());
                 LoopingDict.Add(key, false);
             }
+            GuildsDownloaded = true;
             e.Handled = true;
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Runs occasionally. Checks if the bot has been idle in a channel for too long and disconnents it.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private Task Heartbeated(DiscordClient sender, HeartbeatEventArgs e)
         {
-            Debug.WriteLine("Heartbeated");
+            foreach (var (key, guild) in sender.Guilds)
+            {
+                var lava = Bot.Client.GetLavalink();
+                var node = lava.ConnectedNodes.Values.First();
+                var conn = node.GetGuildConnection(guild);
+                if (conn == null) { continue; }
+                if (IsPlaying(conn)) { continue; }
+                if (IdleDict[key].AddMinutes(3) > DateTime.Now) { continue; }
+                conn.DisconnectAsync();
+            }
             e.Handled = true;
             return Task.CompletedTask;
         }
