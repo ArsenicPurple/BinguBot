@@ -42,11 +42,6 @@ namespace BinguBot.Commands
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
-            var channel = GetUserChannel(ctx).Result;
-            if (channel == null) { return; }
-
-            await ConnectToChannel(ctx, channel);
-
             LavalinkNodeConnection node;
             LavalinkGuildConnection conn;
             if ((node = GetConnection(ctx).Item1) == null || (conn = GetConnection(ctx).Item2) == null)
@@ -56,7 +51,11 @@ namespace BinguBot.Commands
 
             var loadResult = await node.Rest.GetTracksAsync(new Uri("https://youtu.be/3F88-fIMk54"));
             var track = loadResult.Tracks.First();
+
+            var timestamp = conn.CurrentState.CurrentTrack.Position;
+            await InterruptPlayback(ctx, conn);
             await conn.PlayAsync(track);
+            await conn.SeekAsync(timestamp);
         }
 
         /// <summary>
@@ -65,7 +64,10 @@ namespace BinguBot.Commands
         /// <param name="ctx"></param>
         /// <returns></returns>
         [Command("join")]
-        public async Task Join(CommandContext ctx) {
+        public async Task Join(CommandContext ctx) 
+        {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             var key = ctx.Guild.Id;
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
@@ -82,6 +84,9 @@ namespace BinguBot.Commands
         [Command("leave")]
         public async Task Leave(CommandContext ctx)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            var key = ctx.Guild.Id;
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -103,6 +108,7 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
+                QueueDict[key].Clear();
                 await conn.StopAsync();
                 await Task.Delay(100);
             }
@@ -119,6 +125,8 @@ namespace BinguBot.Commands
         [Command("queue"), Aliases("q")]
         public async Task Queue(CommandContext ctx)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             var key = ctx.Guild.Id;
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
@@ -155,6 +163,8 @@ namespace BinguBot.Commands
         [Command("skip")]
         public async Task Skip(CommandContext ctx)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
@@ -162,6 +172,7 @@ namespace BinguBot.Commands
                 return;
             }
 
+            await ctx.RespondAsync($"Skipping {conn.CurrentState.CurrentTrack.Title}");
             await conn.StopAsync();
         }
 
@@ -173,6 +184,8 @@ namespace BinguBot.Commands
         [Command("clear")]
         public async Task Clear(CommandContext ctx)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             var key = ctx.Guild.Id;
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
@@ -200,6 +213,8 @@ namespace BinguBot.Commands
                 await Play(ctx, result);
                 return;
             }
+
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
             var key = ctx.Guild.Id;
             var channel = GetUserChannel(ctx).Result;
@@ -247,6 +262,8 @@ namespace BinguBot.Commands
         [Command("play")]
         public async Task Play(CommandContext ctx, Uri url)
         {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
             var key = ctx.Guild.Id;
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
@@ -505,6 +522,15 @@ namespace BinguBot.Commands
             return conn;
         }
 
+        public async Task InterruptPlayback(CommandContext ctx, LavalinkGuildConnection conn)
+        {
+            var key = ctx.Guild.Id;
+            var tmp = QueueDict[key];
+
+            QueueDict[key].Clear();
+            await conn.StopAsync();
+            QueueDict[key] = tmp;
+        }
 
         /// <summary>
         /// Runs on playback finished. Checks if the track should loop and then plays the next song accordingly.
@@ -515,7 +541,7 @@ namespace BinguBot.Commands
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
         {
             var key = sender.Guild.Id;
-            if (LoopingDict[key]) { await sender.PlayAsync(QueueDict[key].Peek()); }
+            if (LoopingDict[key]) { await sender.PlayAsync(e.Track); }
             if (QueueIsEmpty(key))
             {
                 IdleDict[key] = DateTime.Now;
