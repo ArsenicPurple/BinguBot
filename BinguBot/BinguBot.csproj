@@ -27,12 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Blotch3D">
-      <HintPath>..\..\..\..\Documents\GitHub\Blotch3D\src\bin\Debug\netstandard2.0\Blotch3D.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Json\config.json">
       <SubType>Component</SubType>
     </None>

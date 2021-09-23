@@ -27,8 +27,6 @@ namespace BinguBot.Commands
 
         Dictionary<ulong, DateTime> IdleDict = new Dictionary<ulong, DateTime>();
 
-        bool GuildsDownloaded;
-
         public MusicCommands()
         {
             Bot.Client.GuildDownloadCompleted += GuildDownloadCompleted;
@@ -243,12 +241,12 @@ namespace BinguBot.Commands
             if (IsPlaying(conn))
             {
                 QueueDict[key].Enqueue(track);
-                await ctx.RespondAsync($"Queued {track.Title}!");
+                await ctx.RespondAsync($"Queued `{track.Title}`!");
                 return;
             }
 
             await conn.PlayAsync(track);
-            await ctx.RespondAsync($"Now playing {track.Title}!");
+            await ctx.RespondAsync($"Now playing `{track.Title}`!");
         }
         [Command("p"), Hidden()]
         public async Task P(CommandContext ctx, [RemainingText] string search) { await Play(ctx, search); }
@@ -291,12 +289,12 @@ namespace BinguBot.Commands
             if (IsPlaying(conn))
             {
                 QueueDict[key].Enqueue(track);
-                await ctx.RespondAsync($"Queued {track.Title}!");
+                await ctx.RespondAsync($"Queued: `{track.Title}`!");
                 return;
             }
 
             await conn.PlayAsync(track);
-            await ctx.RespondAsync($"Now playing {track.Title}!");
+            await ctx.RespondAsync($"Now playing: `{track.Title}`!");
         }
         [Command("p"), Hidden()]
         public async Task P(CommandContext ctx, Uri url) { await Play(ctx, url); }
@@ -435,6 +433,12 @@ namespace BinguBot.Commands
             }
         }
 
+        [Command("suggest")]
+        public async Task Suggest(CommandContext ctx)
+        {
+            await ctx.RespondAsync("Apologies, this command is not yet implemented");
+        }
+
         /*
         [Command("funkify")]
         [Hidden()]
@@ -564,7 +568,6 @@ namespace BinguBot.Commands
                 QueueDict.Add(key, new Queue<LavalinkTrack>());
                 LoopingDict.Add(key, false);
             }
-            GuildsDownloaded = true;
             e.Handled = true;
             return Task.CompletedTask;
         }

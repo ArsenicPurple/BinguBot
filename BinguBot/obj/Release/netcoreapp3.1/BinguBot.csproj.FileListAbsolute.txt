@@ -28,8 +28,6 @@ C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.pdb
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.genruntimeconfig.cache
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csproj.CoreCompileInputs.cache
-C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\Blotch3D.dll
-C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\Blotch3D.pdb
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\MonoGame.Framework.dll
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\runtimes\linux-x64\native\libSDL2-2.0.so.0
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\runtimes\linux-x64\native\libopenal.so.1
@@ -39,4 +37,5 @@ C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\runtimes
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\runtimes\win-x64\native\soft_oal.dll
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\runtimes\win-x86\native\SDL2.dll
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\runtimes\win-x86\native\soft_oal.dll
-C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csprojAssemblyReference.cache
+C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csproj.AssemblyReference.cache
+C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.GeneratedMSBuildEditorConfig.editorconfig

@@ -15,8 +15,7 @@
           "MonoGame.Framework.DesktopGL": "3.8.0.1641",
           "System.Collections": "4.3.0",
           "System.Collections.NonGeneric": "4.3.0",
-          "System.Drawing.Common": "5.0.2",
-          "Blotch3D": "1.0.0.0"
+          "System.Drawing.Common": "5.0.2"
         },
         "runtime": {
           "BinguBot.dll": {}
@@ -838,15 +837,7 @@
           "System.Runtime": "4.3.0"
         }
       },
-      "System.ValueTuple/4.5.0": {},
-      "Blotch3D/1.0.0.0": {
-        "runtime": {
-          "Blotch3D.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
-          }
-        }
-      }
+      "System.ValueTuple/4.5.0": {}
     }
   },
   "libraries": {
@@ -1435,11 +1426,6 @@
       "sha512": "sha512-okurQJO6NRE/apDIP23ajJ0hpiNmJ+f0BwOlB/cSqTLQlw5upkf+5+96+iG2Jw40G1fCVCyPz/FhIABUjMR+RQ==",
       "path": "system.valuetuple/4.5.0",
       "hashPath": "system.valuetuple.4.5.0.nupkg.sha512"
-    },
-    "Blotch3D/1.0.0.0": {
-      "type": "reference",
-      "serviceable": false,
-      "sha512": ""
     }
   }
 }
