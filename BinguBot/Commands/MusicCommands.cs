@@ -436,7 +436,7 @@ namespace BinguBot.Commands
         [Command("suggest")]
         public async Task Suggest(CommandContext ctx)
         {
-            await ctx.RespondAsync("Apologies, this command is not yet implemented");
+            await ctx.RespondAsync("Apologies, this command is not yet implemented... \n also you smell");
         }
 
         /*
