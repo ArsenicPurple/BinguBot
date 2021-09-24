@@ -206,14 +206,9 @@ namespace BinguBot.Commands
         /// <param name="search"></param>
         /// <returns></returns>
         [Command("play")]
+        [Aliases("p")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
-            if (Uri.TryCreate(search, UriKind.Absolute, out var result))
-            {
-                await Play(ctx, result);
-                return;
-            }
-
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
             var key = ctx.Guild.Id;
@@ -230,7 +225,7 @@ namespace BinguBot.Commands
                 return;
             }
 
-            var loadResult = await node.Rest.GetTracksAsync(search);
+            var loadResult = GetTrack(node, search).Result;
 
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
             {
@@ -250,17 +245,10 @@ namespace BinguBot.Commands
             await conn.PlayAsync(track);
             await ctx.RespondAsync($"Now playing `{track.Title}`!");
         }
-        [Command("p"), Hidden()]
-        public async Task P(CommandContext ctx, [RemainingText] string search) { await Play(ctx, search); }
 
-        /// <summary>
-        /// Searches for the url given and plays it. Queues the track if a track is already playing.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        [Command("play")]
-        public async Task Play(CommandContext ctx, Uri url)
+        [Command("playtop")]
+        [Aliases("pt")]
+        public async Task PlayTop(CommandContext ctx, [RemainingText] string search)
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
@@ -278,11 +266,11 @@ namespace BinguBot.Commands
                 return;
             }
 
-            var loadResult = await node.Rest.GetTracksAsync(url);
+            var loadResult = GetTrack(node, search).Result;
 
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
             {
-                await ctx.RespondAsync($"Track search failed.");
+                await ctx.RespondAsync($"Track search failed for {search}.");
                 return;
             }
 
@@ -290,16 +278,21 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
-                QueueDict[key].Enqueue(new QueuedTrack(track, ctx));
-                await ctx.RespondAsync($"Queued: `{track.Title}`!");
+                var qList = QueueDict[key].ToList();
+                Queue<QueuedTrack> tmp = new Queue<QueuedTrack>();
+                tmp.Enqueue(new QueuedTrack(track, ctx));
+                foreach (QueuedTrack qtrack in qList)
+                {
+                    tmp.Enqueue(qtrack);
+                }
+                QueueDict[key] = tmp;
+                await ctx.RespondAsync($"Queued `{track.Title}` at the top!");
                 return;
             }
 
             await conn.PlayAsync(track);
-            await ctx.RespondAsync($"Now playing: `{track.Title}`!");
+            await ctx.RespondAsync($"Now playing `{track.Title}`!");
         }
-        [Command("p"), Hidden()]
-        public async Task P(CommandContext ctx, Uri url) { await Play(ctx, url); }
 
         /// <summary>
         /// Pauses the currently playing track.
@@ -526,6 +519,16 @@ namespace BinguBot.Commands
             var conn = await node.ConnectAsync(channel);
             conn.PlaybackFinished += PlaybackFinished;
             return conn;
+        }
+
+        public async Task<LavalinkLoadResult> GetTrack(LavalinkNodeConnection node, string search)
+        {
+            if (Uri.TryCreate(search, UriKind.Absolute, out var result))
+            {
+                return await node.Rest.GetTracksAsync(result);
+            }
+            
+            return await node.Rest.GetTracksAsync(search);
         }
 
         public async Task InterruptPlayback(CommandContext ctx, LavalinkGuildConnection conn)
