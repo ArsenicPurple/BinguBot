@@ -12,6 +12,8 @@ using System.Diagnostics;
 using DSharpPlus.EventArgs;
 using System.Collections;
 
+using BinguBot.DataTypes;
+
 namespace BinguBot.Commands
 {
     /** TODO
@@ -21,7 +23,7 @@ namespace BinguBot.Commands
      */
     class MusicCommands : BaseCommandModule
     {
-        Dictionary<ulong, Queue<LavalinkTrack>> QueueDict = new Dictionary<ulong, Queue<LavalinkTrack>>();
+        Dictionary<ulong, Queue<QueuedTrack>> QueueDict = new Dictionary<ulong, Queue<QueuedTrack>>();
 
         Dictionary<ulong, bool> LoopingDict = new Dictionary<ulong, bool>();
 
@@ -116,7 +118,7 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Lists the currently playing track and all tracks in the QueueDict[key].
+        /// Lists the currently playing track and all tracks in the Queue.
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
@@ -147,14 +149,14 @@ namespace BinguBot.Commands
             content += "Next Up:\n";
             for (int i = 1; i < qArray.Length + 1; i++)
             {
-                content += $"{i}: {qArray[i - 1].Title}\n";
+                content += $"{i}: {qArray[i - 1].Track.Title} : \n — Queued By {qArray[i - 1].queuedBy.DisplayName}";
             }
             content += "```";
             await ctx.Channel.SendMessageAsync(content);
         }
 
         /// <summary>
-        /// Skips the currently playing track and plays the next track in the QueueDict[key]. Stops player is the is nothing in the QueueDict[key].
+        /// Skips the currently playing track and plays the next track in the Queue. Stops player is the is nothing in the Queue.
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
@@ -175,7 +177,7 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Stops the currently playing track and clear the QueueDict[key].
+        /// Stops the currently playing track and clear the Queue.
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
@@ -240,7 +242,7 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
-                QueueDict[key].Enqueue(track);
+                QueueDict[key].Enqueue(new QueuedTrack(track, ctx));
                 await ctx.RespondAsync($"Queued `{track.Title}`!");
                 return;
             }
@@ -288,7 +290,7 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
-                QueueDict[key].Enqueue(track);
+                QueueDict[key].Enqueue(new QueuedTrack(track, ctx));
                 await ctx.RespondAsync($"Queued: `{track.Title}`!");
                 return;
             }
@@ -394,7 +396,7 @@ namespace BinguBot.Commands
 
             var key = ctx.Guild.Id;
             var qList = QueueDict[key].ToList();
-            var title = qList[index - 1].Title;
+            var title = qList[index - 1].Track.Title;
             try
             {
                 qList.RemoveAt(index - 1);
@@ -404,8 +406,8 @@ namespace BinguBot.Commands
                 await ctx.RespondAsync($"There is no track at postion {index}");
             }
             
-            Queue<LavalinkTrack> tmp = new Queue<LavalinkTrack>();
-            foreach (LavalinkTrack track in qList)
+            Queue<QueuedTrack> tmp = new Queue<QueuedTrack>();
+            foreach (QueuedTrack track in qList)
             {
                 tmp.Enqueue(track);
             }
@@ -551,7 +553,7 @@ namespace BinguBot.Commands
                 IdleDict[key] = DateTime.Now;
                 return;
             }
-            await sender.PlayAsync(QueueDict[key].Dequeue());
+            await sender.PlayAsync(QueueDict[key].Dequeue().Track);
             e.Handled = true;
         }
 
@@ -565,7 +567,7 @@ namespace BinguBot.Commands
         {
             foreach(var (key, _) in e.Guilds)
             {
-                QueueDict.Add(key, new Queue<LavalinkTrack>());
+                QueueDict.Add(key, new Queue<QueuedTrack>());
                 LoopingDict.Add(key, false);
             }
             e.Handled = true;
