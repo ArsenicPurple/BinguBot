@@ -149,7 +149,7 @@ namespace BinguBot.Commands
             content += "Next Up:\n";
             for (int i = 1; i < qArray.Length + 1; i++)
             {
-                content += $"{i}: {qArray[i - 1].Track.Title} : \n — Queued By {qArray[i - 1].queuedBy.DisplayName}";
+                content += $"{i}: {qArray[i - 1].Track.Title} : \n — Queued By {qArray[i - 1].queuedBy.DisplayName}\n";
             }
             content += "```";
             await ctx.Channel.SendMessageAsync(content);
