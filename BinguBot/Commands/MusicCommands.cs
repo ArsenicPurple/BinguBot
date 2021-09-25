@@ -197,6 +197,8 @@ namespace BinguBot.Commands
             await conn.PauseAsync();
             QueueDict[key].Clear();
             await conn.StopAsync();
+
+            await ctx.RespondAsync("Cleared the queue");
         }
 
         /// <summary>
@@ -355,6 +357,12 @@ namespace BinguBot.Commands
         [Command("seek")]
         public async Task Seek(CommandContext ctx, int seconds)
         {
+            if (seconds == 0)
+            {
+                await ctx.RespondAsync("Please use the `?restart` command to restart the track");
+                return;
+            }
+
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
             LavalinkGuildConnection conn;
@@ -370,10 +378,89 @@ namespace BinguBot.Commands
                 return;
             }
 
-            var minutes = seconds % 60;
-            seconds -= minutes * 60;
-            await ctx.RespondAsync($"Moved to {minutes}:{seconds}");
+            var timestamp = TimeSpan.FromSeconds(seconds);
+            await ctx.RespondAsync($"Moved to {timestamp}");
             await conn.SeekAsync(TimeSpan.FromSeconds(seconds));
+        }
+
+        [Command("restart")]
+        public async Task Restart(CommandContext ctx)
+        {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel");
+                return;
+            }
+
+            if (conn.CurrentState.CurrentTrack == null)
+            {
+                await ctx.RespondAsync("There are no tracks loaded.");
+                return;
+            }
+
+            await ctx.RespondAsync($"Restarting the track");
+            await conn.SeekAsync(TimeSpan.FromSeconds(0));
+        }
+
+        [Command("fastforward")]
+        [Aliases("ff", ">")]
+        public async Task FastForward(CommandContext ctx, [RemainingText] int seconds)
+        {
+            seconds = seconds == 0 ? 10 : seconds;
+
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel");
+                return;
+            }
+
+            if (conn.CurrentState.CurrentTrack == null)
+            {
+                await ctx.RespondAsync("There are no tracks loaded.");
+                return;
+            }
+
+            var timestamp = TimeSpan.FromSeconds(seconds);
+            await ctx.RespondAsync($"Fast Forwarded by {timestamp}");
+            await conn.SeekAsync(conn.CurrentState.PlaybackPosition.Add(timestamp));
+        }
+
+        /// <summary>
+        /// Rewinds the track by the number of seconds given. Rewinds by 10 if no value is given.
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="seconds"></param>
+        /// <returns></returns>
+        [Command("rewind")]
+        [Aliases("<")]
+        public async Task Rewind(CommandContext ctx, [RemainingText] int seconds)
+        {
+            seconds = seconds == 0 ? 10 : seconds;
+
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel");
+                return;
+            }
+
+            if (conn.CurrentState.CurrentTrack == null)
+            {
+                await ctx.RespondAsync("There are no tracks loaded.");
+                return;
+            }
+
+            var timestamp = TimeSpan.FromSeconds(seconds);
+            await ctx.RespondAsync($"Fast Forwarded by {timestamp}");
+            await conn.SeekAsync(conn.CurrentState.PlaybackPosition.Subtract(timestamp));
         }
 
         /// <summary>

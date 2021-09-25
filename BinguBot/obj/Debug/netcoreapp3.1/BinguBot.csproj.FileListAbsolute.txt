@@ -38,5 +38,3 @@ C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Debug\netcoreapp3.1\runtimes\w
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Debug\netcoreapp3.1\runtimes\win-x64\native\soft_oal.dll
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Debug\netcoreapp3.1\runtimes\win-x86\native\SDL2.dll
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Debug\netcoreapp3.1\runtimes\win-x86\native\soft_oal.dll
-C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Debug\netcoreapp3.1\Blotch3D.dll
-C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Debug\netcoreapp3.1\Blotch3D.pdb
