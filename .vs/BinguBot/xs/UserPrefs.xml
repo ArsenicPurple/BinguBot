@@ -1,22 +1,23 @@
 ﻿<Properties GitUserInfo="UsingGIT" StartupConfiguration="{E226AE23-5C72-43FF-9DF3-ED23334C8A16}|Default">
-  <MonoDevelop.Ide.Workbench ActiveDocument="BinguBot/DataTypes/QueuedTrack.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="BinguBot/Commands/MusicCommands.cs">
     <Files>
-      <File FileName="BinguBot/Commands/MusicCommands.cs" Line="24" Column="107" />
+      <File FileName="BinguBot/Commands/MusicCommands.cs" Line="301" Column="23" />
       <File FileName="BinguBot/Bot.cs" />
       <File FileName="BinguBot/Json/config.json" />
       <File FileName="BinguBot/Commands/TestCommands.cs" />
       <File FileName="BinguBot/Program.cs" />
-      <File FileName="BinguBot/DataTypes/QueuedTrack.cs" Line="1" Column="1" />
-      <File FileName="BinguBot/DataTypes/QueuedTrack.cs" Line="4" Column="2" />
+      <File FileName="BinguBot/DataTypes/QueuedTrack.cs" />
+      <File FileName="BinguBot/DataTypes/GuildData.cs" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="BinguBot" expanded="True">
             <Node name="BinguBot" expanded="True">
-              <Node name="DataTypes" expanded="True">
-                <Node name="QueuedTrack.cs" selected="True" />
+              <Node name="Commands" expanded="True">
+                <Node name="MusicCommands.cs" selected="True" />
               </Node>
+              <Node name="DataTypes" expanded="True" />
             </Node>
           </Node>
         </State>
