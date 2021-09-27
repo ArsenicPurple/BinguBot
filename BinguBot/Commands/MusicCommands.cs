@@ -529,8 +529,13 @@ namespace BinguBot.Commands
             var qList = Data[key].GuildQueue.ToList();
 
             Queue<QueuedTrack> tmp = new Queue<QueuedTrack>();
-            foreach (QueuedTrack track in qList)
+            int total = qList.Count;
+            Random r = new Random();
+            for (int i = 0; i < total; i++)
             {
+                int index = r.Next(qList.Count);
+                var track = qList[index];
+                qList.RemoveAt(index);
                 tmp.Enqueue(track);
             }
             Data[key].GuildQueue = tmp;
