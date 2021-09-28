@@ -13,6 +13,7 @@
     <None Include="bin\Debug\netcoreapp3.1\config.json">
       <SubType>Component</SubType>
     </None>
+    <None Include="bin\Debug\netcoreapp3.1\suggestions.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -23,11 +23,7 @@ namespace BinguBot.Commands
      */
     class MusicCommands : BaseCommandModule
     {
-        Dictionary<ulong, Queue<QueuedTrack>> QueueDict = new Dictionary<ulong, Queue<QueuedTrack>>();
-
-        Dictionary<ulong, bool> LoopingDict = new Dictionary<ulong, bool>();
-
-        Dictionary<ulong, GuildData> Data = new Dictionary<ulong, GuildData>();
+        public static Dictionary<ulong, GuildData> Data = new Dictionary<ulong, GuildData>();
 
         public MusicCommands()
         {
@@ -539,13 +535,28 @@ namespace BinguBot.Commands
                 tmp.Enqueue(track);
             }
             Data[key].GuildQueue = tmp;
+
+            await ctx.RespondAsync("Shuffled the queue!");
         }
 
+        /*
         [Command("suggest")]
-        public async Task Suggest(CommandContext ctx)
+        public async Task Suggest(CommandContext ctx, [RemainingText] string suggestion)
         {
-            await ctx.RespondAsync("Apologies, this command is not yet implemented... \n also you smell");
+            var key = ctx.Guild.Id;
+            var data = Data[key];
+
+            if (data.SuggestionList.ContainsKey(ctx.User.Id))
+            {
+                await ctx.RespondAsync("You may only make one suggestion per week");
+                return;
+            }
+
+            data.SuggestionList.Add(ctx.User.Id, suggestion);
+
+            await ctx.RespondAsync("Your suggestion has been received");
         }
+        */
 
         /*
         [Command("funkify")]
@@ -685,6 +696,26 @@ namespace BinguBot.Commands
             {
                 Data.Add(key, new GuildData(new Queue<QueuedTrack>(), false));
             }
+
+            /*
+            foreach(var (key, data) in Data)
+            {
+                Dictionary<ulong, string> SubList = new Dictionary<ulong, string>();
+                try
+                {
+                    foreach (var (id, suggestion) in Bot._Data[key.ToString()])
+                    {
+                        SubList.Add(ulong.Parse(id), suggestion);
+                    }
+                    data.SuggestionList = SubList;
+                } 
+                catch (KeyNotFoundException)
+                {
+                    Debug.WriteLine($"No Key Found for {key}");
+                }
+            }
+            */
+
             e.Handled = true;
             return Task.CompletedTask;
         }

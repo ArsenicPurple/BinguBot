@@ -7,13 +7,15 @@ using DSharpPlus.Lavalink;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using BinguBot.DataTypes;
 
 namespace BinguBot
 {
@@ -23,19 +25,27 @@ namespace BinguBot
         public CommandsNextExtension Commands { get; private set; }
         public InteractivityExtension Interactivity { get; private set; }
 
+        public static Dictionary<string, Dictionary<string, string>> _Data;
+
         public async Task RunAsync()
         {
-            var json = string.Empty;
-
-            using (var fs = File.OpenRead("config.json"))
+            ConfigJson configJson;
+            
+            using (StreamReader r = new StreamReader(@"config.json"))
             {
-                using (var sr = new StreamReader(fs, new UTF8Encoding(false)))
-                {
-                    json = await sr.ReadToEndAsync().ConfigureAwait(false);
-                }
+                string json = r.ReadToEnd();
+                Debug.WriteLine("JSON Read:" + json);
+                Console.WriteLine("JSON Read:" + json);
+                configJson = JsonSerializer.Deserialize<ConfigJson>(json);
             }
 
-            var configJson = JsonConvert.DeserializeObject<ConfigJson>(json);
+            /*
+            using (StreamReader r = new StreamReader(@"C:\Users\samcr\source\repos\BinguBot\BinguBot\Json\suggestions.json"))
+            {
+                string json = r.ReadToEnd();
+                _Data = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
+            }
+            */
 
             var config = new DiscordConfiguration
             {

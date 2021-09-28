@@ -36,6 +36,5 @@ C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\BinguBot
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\BinguBot.runtimeconfig.json
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\BinguBot.runtimeconfig.dev.json
 C:\Users\samcr\source\repos\BinguBot\BinguBot\bin\Release\netcoreapp3.1\BinguBot.pdb
-C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csproj.AssemblyReference.cache
-C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.genruntimeconfig.cache
+C:\Users\samcr\source\repos\BinguBot\BinguBot\obj\Release\netcoreapp3.1\BinguBot.csprojAssemblyReference.cache
