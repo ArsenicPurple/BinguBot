@@ -539,6 +539,34 @@ namespace BinguBot.Commands
             await ctx.RespondAsync("Shuffled the queue!");
         }
 
+        [Command("info")]
+        [Aliases("i, song")]
+        public async Task Song(CommandContext ctx)
+        {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            LavalinkGuildConnection conn;
+            if ((conn = GetConnection(ctx).Item2) == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel");
+                return;
+            }
+
+            if (conn.CurrentState.CurrentTrack == null)
+            {
+                await ctx.RespondAsync("There are no tracks loaded.");
+                return;
+            }
+
+            var CurrentTrack = conn.CurrentState.CurrentTrack;
+            DiscordEmbed embed = new DiscordEmbedBuilder()
+            {
+                Url = CurrentTrack.Uri.ToString(),
+                Author = CurrentTrack.Author
+                
+            };
+        }
+
         /*
         [Command("suggest")]
         public async Task Suggest(CommandContext ctx, [RemainingText] string suggestion)
