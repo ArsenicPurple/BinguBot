@@ -13,6 +13,9 @@ using DSharpPlus.EventArgs;
 using System.Collections;
 
 using BinguBot.DataTypes;
+using System.Net;
+using System.IO;
+using System.Text.Json;
 
 namespace BinguBot.Commands
 {
@@ -24,34 +27,12 @@ namespace BinguBot.Commands
     class MusicCommands : BaseCommandModule
     {
         public static Dictionary<ulong, GuildData> Data = new Dictionary<ulong, GuildData>();
-
+        
         public MusicCommands()
         {
             Bot.Client.GuildDownloadCompleted += GuildDownloadCompleted;
             Bot.Client.Heartbeated += Heartbeated;
-            Debug.WriteLine("Music Commands Initialized");
-        }
-
-        [Command("rtt")]
-        [Hidden()]
-        public async Task RapTapTap(CommandContext ctx)
-        {
-            await ctx.Channel.DeleteMessageAsync(ctx.Message);
-
-            LavalinkNodeConnection node;
-            LavalinkGuildConnection conn;
-            if ((node = GetConnection(ctx).Item1) == null || (conn = GetConnection(ctx).Item2) == null)
-            {
-                return;
-            }
-
-            var loadResult = await node.Rest.GetTracksAsync(new Uri("https://youtu.be/3F88-fIMk54"));
-            var track = loadResult.Tracks.First();
-
-            var timestamp = conn.CurrentState.CurrentTrack.Position;
-            await InterruptPlayback(ctx, conn);
-            await conn.PlayAsync(track);
-            await conn.SeekAsync(timestamp);
+            Bot.LogInfo("Music Commands Initialized");
         }
 
         /// <summary>
@@ -198,7 +179,7 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Searches for the value given and plays it. Queues the track if a track is already playing.
+        /// Searches for the value given and plays it. Queues the track to play after all other queued tracks if a track is already playing.
         /// </summary>
         /// <param name="ctx"></param>
         /// <param name="search"></param>
@@ -244,6 +225,12 @@ namespace BinguBot.Commands
             await ctx.RespondAsync($"Now playing `{track.Title}`!");
         }
 
+        /// <summary>
+        /// Searches for the value given and play it. Queues the track to play next if a track is already playing
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="search"></param>
+        /// <returns></returns>
         [Command("playtop")]
         [Aliases("pt")]
         public async Task PlayTop(CommandContext ctx, [RemainingText] string search)
@@ -379,6 +366,11 @@ namespace BinguBot.Commands
             await conn.SeekAsync(TimeSpan.FromSeconds(seconds));
         }
 
+        /// <summary>
+        /// Restarts the currently playing track to 0 seconds
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
         [Command("restart")]
         public async Task Restart(CommandContext ctx)
         {
@@ -401,6 +393,12 @@ namespace BinguBot.Commands
             await conn.SeekAsync(TimeSpan.FromSeconds(0));
         }
 
+        /// <summary>
+        /// Fast Forwards the currently playing track by the given time in seconds. 10 seconds if no value is given
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="seconds"></param>
+        /// <returns></returns>
         [Command("fastforward")]
         [Aliases("ff", ">")]
         public async Task FastForward(CommandContext ctx, [RemainingText] int seconds)
@@ -428,7 +426,7 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Rewinds the track by the number of seconds given. Rewinds by 10 if no value is given.
+        /// Rewinds the currently playing track by the given time in seconds. 10 seconds if no value is given.
         /// </summary>
         /// <param name="ctx"></param>
         /// <param name="seconds"></param>
@@ -540,7 +538,7 @@ namespace BinguBot.Commands
         }
 
         [Command("info")]
-        [Aliases("i, song")]
+        [Aliases("i", "song")]
         public async Task Song(CommandContext ctx)
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
@@ -559,62 +557,19 @@ namespace BinguBot.Commands
             }
 
             var CurrentTrack = conn.CurrentState.CurrentTrack;
+            string turi = GetThumbnailUri(CurrentTrack.Uri);
+
+            using (WebClient wc = new WebClient())
+            {
+                wc.DownloadFileAsync(new Uri(turi), "thumbnail.jpg");
+            }
+
             DiscordEmbed embed = new DiscordEmbedBuilder()
             {
-                Url = CurrentTrack.Uri.ToString(),
-                Author = CurrentTrack.Author
-                
+                ImageUrl = "thumbnail.jpg",
             };
+            await ctx.Channel.SendMessageAsync(embed);
         }
-
-        /*
-        [Command("suggest")]
-        public async Task Suggest(CommandContext ctx, [RemainingText] string suggestion)
-        {
-            var key = ctx.Guild.Id;
-            var data = Data[key];
-
-            if (data.SuggestionList.ContainsKey(ctx.User.Id))
-            {
-                await ctx.RespondAsync("You may only make one suggestion per week");
-                return;
-            }
-
-            data.SuggestionList.Add(ctx.User.Id, suggestion);
-
-            await ctx.RespondAsync("Your suggestion has been received");
-        }
-        */
-
-        /*
-        [Command("funkify")]
-        [Hidden()]
-        public async Task Funk(CommandContext ctx, int id)
-        {
-            await ctx.Channel.DeleteMessageAsync(ctx.Message);
-
-            LavalinkGuildConnection conn;
-            if ((conn = GetConnection(ctx).Item2) == null)
-            {
-                await ctx.RespondAsync("You are not in a voice channel");
-                return;
-            }
-
-            if (conn.CurrentState.CurrentTrack == null)
-            {
-                await ctx.RespondAsync("There are no tracks loaded.");
-                return;
-            }
-
-            if (id < 0 || id > 14)
-            {
-                return;
-            }
-
-            var band = new LavalinkBandAdjustment(id, 0.25f);
-            await conn.AdjustEqualizerAsync(band);
-        }
-        */
 
         //Mark:-- Utility Methods
 
@@ -642,7 +597,6 @@ namespace BinguBot.Commands
             DiscordChannel channel;
             if ((channel = ctx.Member.VoiceState.Channel) == null)
             {
-                Debug.WriteLine("Is Null");
                 await ctx.RespondAsync("You are not currently in a Voice Channel");
                 return null;
             }
@@ -677,6 +631,10 @@ namespace BinguBot.Commands
         {
             if (Uri.TryCreate(search, UriKind.Absolute, out var result))
             {
+                if (search.Contains("spotify"))
+                {
+                    return await node.Rest.GetTracksAsync(await GetSpotifyAsync(result));
+                }
                 return await node.Rest.GetTracksAsync(result);
             }
             
@@ -725,25 +683,6 @@ namespace BinguBot.Commands
                 Data.Add(key, new GuildData(new Queue<QueuedTrack>(), false));
             }
 
-            /*
-            foreach(var (key, data) in Data)
-            {
-                Dictionary<ulong, string> SubList = new Dictionary<ulong, string>();
-                try
-                {
-                    foreach (var (id, suggestion) in Bot._Data[key.ToString()])
-                    {
-                        SubList.Add(ulong.Parse(id), suggestion);
-                    }
-                    data.SuggestionList = SubList;
-                } 
-                catch (KeyNotFoundException)
-                {
-                    Debug.WriteLine($"No Key Found for {key}");
-                }
-            }
-            */
-
             e.Handled = true;
             return Task.CompletedTask;
         }
@@ -781,12 +720,43 @@ namespace BinguBot.Commands
         }
 
         /// <summary>
-        /// Checks if the song Data[key].GuildQueue is empty.
+        /// Checks if the song Queue is empty.
         /// </summary>
         /// <returns></returns>
         private bool QueueIsEmpty(ulong key)
         {
             return Data[key].GuildQueue.Count == 0;
+        }
+
+        /// <summary>
+        /// Gets the youtube thumbnail uri from a youtube link
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <returns></returns>
+        private string GetThumbnailUri(Uri uri)
+        {
+            return $"http://img.youtube.com/vi/{uri.Query.Substring(3)}/0.jpg";
+        }
+
+        public async Task<string> GetSpotifyAsync(Uri uri)
+        {
+            string id = uri.Segments[2];
+            Uri.TryCreate($"https://api.spotify.com/v1/tracks/{id}", UriKind.Absolute, out Uri result);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(result);
+            request.Headers.Add("Accept", "application/json");
+            request.Headers.Add("Content-Type", "application/json");
+            request.Headers.Add("Authorization", $"Bearer {Bot.spotifyJson.Token}");
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+
+            dynamic json;
+            using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
+            using (Stream stream = response.GetResponseStream())
+            {
+                json = await JsonSerializer.DeserializeAsync<dynamic>(stream);
+            }
+
+            return $"{json.name} {json.artists[0].name}";
+            
         }
     }
 }

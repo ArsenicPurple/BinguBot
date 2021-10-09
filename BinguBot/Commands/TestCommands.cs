@@ -15,6 +15,7 @@ namespace BinguBot.Commands
     [ModuleLifespan(ModuleLifespan.Transient)]
     class TestCommands : BaseCommandModule
     {
+
         [Command("ping")]
         public async Task Ping(CommandContext ctx)
         {
@@ -24,9 +25,10 @@ namespace BinguBot.Commands
         [Command("purge")]
         [Description("Deletes the specified amount of messages.")]
         [RequireUserPermissions(DSharpPlus.Permissions.Administrator)]
-        [RequireBotPermissions(DSharpPlus.Permissions.Administrator)]
         public async Task PurgeChat(CommandContext ctx, uint amount)
         {
+            if (amount > 20) { return; }
+
             var messages = await ctx.Channel.GetMessagesAsync((int)amount + 1);
 
             await ctx.Channel.DeleteMessagesAsync(messages);

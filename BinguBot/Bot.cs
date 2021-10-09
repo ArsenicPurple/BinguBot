@@ -16,6 +16,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using BinguBot.DataTypes;
+using BinguBot.DataTypes.Json;
 
 namespace BinguBot
 {
@@ -25,11 +26,12 @@ namespace BinguBot
         public CommandsNextExtension Commands { get; private set; }
         public InteractivityExtension Interactivity { get; private set; }
 
-        public static Dictionary<string, Dictionary<string, string>> _Data;
+        public static SpotifyJson spotifyJson;
 
         public async Task RunAsync()
         {
             ConfigJson configJson;
+            
             
             using (StreamReader r = new StreamReader(@"config.json"))
             {
@@ -40,10 +42,10 @@ namespace BinguBot
             }
 
             /*
-            using (StreamReader r = new StreamReader(@"C:\Users\samcr\source\repos\BinguBot\BinguBot\Json\suggestions.json"))
+            using (StreamReader r = new StreamReader(@"spotify.json"))
             {
                 string json = r.ReadToEnd();
-                _Data = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
+                spotifyJson = JsonSerializer.Deserialize<SpotifyJson>(json);
             }
             */
 
@@ -102,6 +104,23 @@ namespace BinguBot
         private Task OnClientReady(DiscordClient c, ReadyEventArgs e)
         {
             return Task.CompletedTask;
+        }
+
+        public static void LogDebug(string print)
+        {
+            Client.Logger.LogDebug(print);
+        }
+        public static void LogInfo(string print)
+        {
+            Client.Logger.LogInformation(print);
+        }
+        public static void LogError(string print)
+        {
+            Client.Logger.LogError(print);
+        }
+        public static void LogWarning(string print)
+        {
+            Client.Logger.LogWarning(print);
         }
     }
 }
