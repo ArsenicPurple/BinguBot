@@ -741,8 +741,19 @@ namespace BinguBot.Commands
         public async Task<string> GetSpotifyAsync(Uri uri)
         {
             string id = uri.Segments[2];
-            Uri.TryCreate($"https://api.spotify.com/v1/tracks/{id}", UriKind.Absolute, out Uri result);
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(result);
+            HttpWebRequest request;
+            switch (uri.Segments[1][0..^1])
+            {
+                case "tracks":
+                    Uri.TryCreate($"https://api.spotify.com/v1/tracks/{id}", UriKind.Absolute, out Uri trackUri);
+                    request = (HttpWebRequest)WebRequest.Create(trackUri);
+                    break;
+                case "playlists":
+                    Uri.TryCreate($"https://api.spotify.com/v1/playlists/{id}/tracks?fields=items(track(name%2C%20artists(name)))", UriKind.Absolute, out Uri playlistUri);
+                    request = (HttpWebRequest)WebRequest.Create(playlistUri);
+                    break;
+                default: return null;
+            }
             request.Headers.Add("Accept", "application/json");
             request.Headers.Add("Content-Type", "application/json");
             request.Headers.Add("Authorization", $"Bearer {Bot.spotifyJson.Token}");
