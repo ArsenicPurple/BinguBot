@@ -573,7 +573,7 @@ namespace BinguBot.Commands
 
         //Mark:-- Utility Methods
 
-        /// <summary>
+        /// <summary>-
         /// Gets the connection of the member the invoked the command in context.
         /// </summary>
         /// <param name="ctx"></param>

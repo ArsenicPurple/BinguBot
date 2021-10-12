@@ -37,5 +37,19 @@ namespace BinguBot.Commands
             await Task.Delay(delay);
             await m.DeleteAsync();
         }
+
+        //[Command("w")]
+        public async Task Funny(CommandContext ctx)
+        {
+            DiscordEmbed embed = new DiscordEmbedBuilder()
+            {
+                Title = "Zero Two",
+                Description = "Darling in the FranXX\nClaims: #1\nLikes: #1\n**1248** :kakera:",
+                ImageUrl = "https://images-ext-2.discordapp.net/external/4M9xWHunJO_30xM66hND4K7WN3c_eRskq47qJWVP1Ks/https/imgur.com/fqbFdYD.png",
+                Color = DiscordColor.Goldenrod
+            };
+
+            await ctx.Channel.SendMessageAsync("Wished By <@320685237979840515>, <@396090081313554432>", embed);
+        }
     }
 }
