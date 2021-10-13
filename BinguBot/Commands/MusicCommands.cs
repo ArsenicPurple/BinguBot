@@ -631,6 +631,7 @@ namespace BinguBot.Commands
         {
             if (Uri.TryCreate(search, UriKind.Absolute, out var result))
             {
+                Bot.LogDebug("Made Uri from Search");
                 if (search.Contains("spotify"))
                 {
                     return await node.Rest.GetTracksAsync(await GetSpotifyAsync(result));
@@ -740,6 +741,7 @@ namespace BinguBot.Commands
 
         public async Task<string> GetSpotifyAsync(Uri uri)
         {
+            Bot.LogDebug("Found Spotify Link");
             string id = uri.Segments[2];
             HttpWebRequest request;
             switch (uri.Segments[1][0..^1])
@@ -758,7 +760,7 @@ namespace BinguBot.Commands
             request.Headers.Add("Content-Type", "application/json");
             request.Headers.Add("Authorization", $"Bearer {Bot.spotifyJson.Token}");
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-
+            Bot.LogDebug("Sending Spotify Get Request");
             dynamic json;
             using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
             using (Stream stream = response.GetResponseStream())
@@ -766,6 +768,7 @@ namespace BinguBot.Commands
                 json = await JsonSerializer.DeserializeAsync<dynamic>(stream);
             }
 
+            Bot.LogDebug($"Received {json.name} {json.artists[0].name} from Spotify");
             return $"{json.name} {json.artists[0].name}";
             
         }
