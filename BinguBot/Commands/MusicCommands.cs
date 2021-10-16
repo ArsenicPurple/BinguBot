@@ -3,6 +3,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using DSharpPlus.Interactivity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ using BinguBot.DataTypes;
 using System.Net;
 using System.IO;
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace BinguBot.Commands
 {
@@ -117,19 +119,27 @@ namespace BinguBot.Commands
                 await ctx.RespondAsync("There is nothing in the queue");
                 return;
             }
-
-            var qArray = Data[key].GuildQueue.ToArray();
-
-            string content = string.Empty;
-            content += "```";
-            content += $"Playing: {conn.CurrentState.CurrentTrack.Title}\n\n";
-            content += "Next Up:\n";
-            for (int i = 1; i < qArray.Length + 1; i++)
+            
+            var list = Data[key].GuildQueue;
+            StringBuilder builder = new StringBuilder();
+            builder.Append($"Playing: {conn.CurrentState.CurrentTrack.Title}");
+            builder.AppendLine();
+            builder.AppendLine();
+            builder.Append("Next Up:");
+            builder.AppendLine();
+            for (int i = 1; i < Data[key].GuildQueue.Count + 1; i++)
             {
-                content += $"{i}: {qArray[i - 1].Track.Title} : \n — Queued By {qArray[i - 1].queuedBy.DisplayName}\n";
+                builder.Append(i);
+                builder.Append(": ");
+                builder.Append(list[i - 1].Track.Title);
+                builder.Append(" :\n— Queued By ");
+                builder.Append(list[i - 1].queuedBy.DisplayName);
+                builder.AppendLine();
             }
-            content += "```";
-            await ctx.Channel.SendMessageAsync(content);
+
+            var interactiviy = Bot.Client.GetExtension<InteractivityExtension>();
+            var pages = interactiviy.GeneratePagesInEmbed(builder.ToString(), DSharpPlus.Interactivity.Enums.SplitType.Line);
+            await interactiviy.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
         }
 
         /// <summary>
@@ -191,9 +201,11 @@ namespace BinguBot.Commands
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
             var key = ctx.Guild.Id;
+
+            /// Gets the channel of the user from <param name="ctx"> and attempts to join it.
+            /// Exits if they are not in a channel.
             var channel = GetUserChannel(ctx).Result;
             if (channel == null) { return; }
-
             await ConnectToChannel(ctx, channel);
 
             LavalinkNodeConnection node;
@@ -203,26 +215,66 @@ namespace BinguBot.Commands
                 await ctx.RespondAsync("You are not in a voice channel");
                 return;
             }
+            ///---------
 
+            /// Parses the <param name="search"> 
             var loadResult = GetTrack(node, search).Result;
+            ///---------
 
+            /// Tests if the data loaded from the <param name="search">
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
             {
                 await ctx.RespondAsync($"Track search failed for {search}.");
                 return;
             }
 
-            var track = loadResult.Tracks.First();
+            bool IsPlaylist;
+            List<LavalinkTrack> tracks = new List<LavalinkTrack>();
+            if (IsPlaylist = (loadResult.LoadResultType == LavalinkLoadResultType.PlaylistLoaded))
+            {
+                tracks.AddRange(loadResult.Tracks);
+            }
+            else
+            {
+                tracks[0] = loadResult.Tracks.First();
+            }
 
             if (IsPlaying(conn))
             {
-                Data[key].GuildQueue.Enqueue(new QueuedTrack(track, ctx));
-                await ctx.RespondAsync($"Queued `{track.Title}`!");
+                if (IsPlaylist)
+                {
+                    await ctx.Channel.SendMessageAsync("Queueing Playlist");
+
+                    foreach (var track in tracks)
+                    {
+                        Data[key].GuildQueue.Add(new QueuedTrack(track, ctx));
+                    }
+                    await ctx.RespondAsync($"Queued Playlist `{loadResult.PlaylistInfo.Name}`!");
+                    return;
+                }
+
+                await ctx.Channel.SendMessageAsync("Queueing Playlist");
+
+                Data[key].GuildQueue.Add(new QueuedTrack(tracks[0], ctx));
+                await ctx.RespondAsync($"Queued `{tracks[0].Title}`!");
                 return;
             }
 
-            await conn.PlayAsync(track);
-            await ctx.RespondAsync($"Now playing `{track.Title}`!");
+            if (IsPlaylist)
+            {
+                await ctx.Channel.SendMessageAsync("Playing and Queueing Playlist");
+                for (int i = 1; i < tracks.Count; i++)
+                {
+                    Data[key].GuildQueue.Add(new QueuedTrack(tracks[i], ctx));
+                }
+                await ctx.RespondAsync($"Now playing `{tracks[0].Title}`!");
+                await ctx.RespondAsync($"Queued Playlist `{loadResult.PlaylistInfo.Name}`!");
+                return;
+            }
+
+            await ctx.Channel.SendMessageAsync("Playing Track");
+            await conn.PlayAsync(tracks[0]);
+            await ctx.RespondAsync($"Now playing `{tracks[0].Title}`!");
         }
 
         /// <summary>
@@ -263,14 +315,7 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
-                var qList = Data[key].GuildQueue.ToList();
-                Queue<QueuedTrack> tmp = new Queue<QueuedTrack>();
-                tmp.Enqueue(new QueuedTrack(track, ctx));
-                foreach (QueuedTrack qtrack in qList)
-                {
-                    tmp.Enqueue(qtrack);
-                }
-                Data[key].GuildQueue = tmp;
+                Data[key].GuildQueue.Insert(0, new QueuedTrack(track, ctx));
                 await ctx.RespondAsync($"Queued `{track.Title}` at the top!");
                 return;
             }
@@ -469,24 +514,17 @@ namespace BinguBot.Commands
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
             var key = ctx.Guild.Id;
-            var qList = Data[key].GuildQueue.ToList();
-            var title = qList[index - 1].Track.Title;
+
             try
             {
-                qList.RemoveAt(index - 1);
+                var title = Data[key].GuildQueue[index - 1].Track.Title;
+                Data[key].GuildQueue.RemoveAt(index - 1);
+                await ctx.RespondAsync($"Removed {title}");
             }
-            catch(ArgumentOutOfRangeException)
+            catch (ArgumentOutOfRangeException)
             {
                 await ctx.RespondAsync($"There is no track at postion {index}");
             }
-            
-            Queue<QueuedTrack> tmp = new Queue<QueuedTrack>();
-            foreach (QueuedTrack track in qList)
-            {
-                tmp.Enqueue(track);
-            }
-            await ctx.RespondAsync($"Removed {title}");
-            Data[key].GuildQueue = tmp;
         }
 
         /// <summary>
@@ -520,19 +558,21 @@ namespace BinguBot.Commands
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
             var key = ctx.Guild.Id;
-            var qList = Data[key].GuildQueue.ToList();
+            var list = Data[key].GuildQueue;
 
-            Queue<QueuedTrack> tmp = new Queue<QueuedTrack>();
-            int total = qList.Count;
-            Random r = new Random();
-            for (int i = 0; i < total; i++)
+            RNGCryptoServiceProvider provider = new RNGCryptoServiceProvider();
+            int n = list.Count;
+            while (n > 1)
             {
-                int index = r.Next(qList.Count);
-                var track = qList[index];
-                qList.RemoveAt(index);
-                tmp.Enqueue(track);
+                byte[] box = new byte[1];
+                do provider.GetBytes(box);
+                while (!(box[0] < n * (Byte.MaxValue / n)));
+                int k = (box[0] % n);
+                n--;
+                var value = list[k];
+                list[k] = list[n];
+                list[n] = value;
             }
-            Data[key].GuildQueue = tmp;
 
             await ctx.RespondAsync("Shuffled the queue!");
         }
@@ -661,13 +701,15 @@ namespace BinguBot.Commands
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
         {
             var key = sender.Guild.Id;
-            if (Data[key].IsLooping) { await sender.PlayAsync(e.Track); }
+            if (Data[key].IsLooping) { await sender.PlayAsync(e.Track); return; }
             if (QueueIsEmpty(key))
             {
                 Data[key].TimeIdle = DateTime.Now;
                 return;
             }
-            await sender.PlayAsync(Data[key].GuildQueue.Dequeue().Track);
+
+            await sender.PlayAsync(Data[key].GuildQueue[0].Track);
+            Data[key].GuildQueue.RemoveAt(0);
             e.Handled = true;
         }
 
@@ -681,7 +723,7 @@ namespace BinguBot.Commands
         {
             foreach(var (key, _) in e.Guilds)
             {
-                Data.Add(key, new GuildData(new Queue<QueuedTrack>(), false));
+                Data.Add(key, new GuildData(new List<QueuedTrack>(), false));
             }
 
             e.Handled = true;

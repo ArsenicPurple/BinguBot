@@ -9,14 +9,12 @@ namespace BinguBot.DataTypes
 {
     class GuildData
     {
-        public Queue<QueuedTrack> GuildQueue;
+        public List<QueuedTrack> GuildQueue;
         public bool IsLooping;
         public DateTime TimeIdle;
         public DiscordChannel CommandChannel;
 
-        public Dictionary<ulong, string> SuggestionList = new Dictionary<ulong, string>();
-
-        public GuildData(Queue<QueuedTrack> GuildQueue, bool IsLooping)
+        public GuildData(List<QueuedTrack> GuildQueue, bool IsLooping)
         {
             this.GuildQueue = GuildQueue;
             this.IsLooping = IsLooping;
