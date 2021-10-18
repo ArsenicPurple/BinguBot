@@ -333,7 +333,7 @@ namespace BinguBot.Commands
         public async Task Pause(CommandContext ctx)
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
-
+            
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
             {
