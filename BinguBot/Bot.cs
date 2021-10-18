@@ -109,18 +109,22 @@ namespace BinguBot
         public static void LogDebug(string print)
         {
             Client.Logger.LogDebug(print);
+            Debug.WriteLine(print);
         }
         public static void LogInfo(string print)
         {
             Client.Logger.LogInformation(print);
+            Debug.WriteLine(print);
         }
         public static void LogError(string print)
         {
             Client.Logger.LogError(print);
+            Debug.WriteLine(print);
         }
         public static void LogWarning(string print)
         {
             Client.Logger.LogWarning(print);
+            Debug.WriteLine(print);
         }
     }
 }

@@ -227,54 +227,49 @@ namespace BinguBot.Commands
                 await ctx.RespondAsync($"Track search failed for {search}.");
                 return;
             }
+            ///---------
 
+            /// Checks if the Data that was Received is a Playlist.
+            /// Adds all the Tracks Received to a List
             bool IsPlaylist;
             List<LavalinkTrack> tracks = new List<LavalinkTrack>();
             if (IsPlaylist = (loadResult.LoadResultType == LavalinkLoadResultType.PlaylistLoaded))
             {
+                Bot.LogDebug("Playlist Found");
                 tracks.AddRange(loadResult.Tracks);
             }
             else
             {
-                tracks[0] = loadResult.Tracks.First();
+                Bot.LogDebug("Track Found");
+                tracks.Add(loadResult.Tracks.First());
             }
+            ///---------
 
+            /// Plays or Queues the Recieved Track/s.
+            LavalinkTrack nextTrack = tracks[0];
             if (IsPlaying(conn))
             {
                 if (IsPlaylist)
                 {
-                    await ctx.Channel.SendMessageAsync("Queueing Playlist");
-
-                    foreach (var track in tracks)
-                    {
-                        Data[key].GuildQueue.Add(new QueuedTrack(track, ctx));
-                    }
+                    Data[key].GuildQueue.AddRange(tracks.ConvertAll(track => new QueuedTrack(track, ctx)));
                     await ctx.RespondAsync($"Queued Playlist `{loadResult.PlaylistInfo.Name}`!");
                     return;
                 }
-
-                await ctx.Channel.SendMessageAsync("Queueing Playlist");
-
-                Data[key].GuildQueue.Add(new QueuedTrack(tracks[0], ctx));
-                await ctx.RespondAsync($"Queued `{tracks[0].Title}`!");
+                Data[key].GuildQueue.Add(new QueuedTrack(nextTrack, ctx));
+                await ctx.RespondAsync($"Queued `{nextTrack.Title}`!");
                 return;
             }
 
             if (IsPlaylist)
             {
-                await ctx.Channel.SendMessageAsync("Playing and Queueing Playlist");
-                for (int i = 1; i < tracks.Count; i++)
-                {
-                    Data[key].GuildQueue.Add(new QueuedTrack(tracks[i], ctx));
-                }
-                await ctx.RespondAsync($"Now playing `{tracks[0].Title}`!");
+                await conn.PlayAsync(nextTrack);
+                await ctx.RespondAsync($"Now playing `{nextTrack.Title}`!");
                 await ctx.RespondAsync($"Queued Playlist `{loadResult.PlaylistInfo.Name}`!");
+                Data[key].GuildQueue.AddRange(tracks.Skip(1).ToList().ConvertAll(track => new QueuedTrack(track, ctx)));
                 return;
             }
-
-            await ctx.Channel.SendMessageAsync("Playing Track");
             await conn.PlayAsync(tracks[0]);
-            await ctx.RespondAsync($"Now playing `{tracks[0].Title}`!");
+            await ctx.RespondAsync($"Now playing `{nextTrack.Title}`!");
         }
 
         /// <summary>
@@ -311,11 +306,16 @@ namespace BinguBot.Commands
                 return;
             }
 
+            if (loadResult.LoadResultType == LavalinkLoadResultType.PlaylistLoaded)
+            {
+                await ctx.RespondAsync("Playlists can only be played with the `play` or `p` command");
+            }
+
             var track = loadResult.Tracks.First();
 
             if (IsPlaying(conn))
             {
-                Data[key].GuildQueue.Insert(0, new QueuedTrack(track, ctx));
+                Data[key].GuildQueue.Prepend(new QueuedTrack(track, ctx));
                 await ctx.RespondAsync($"Queued `{track.Title}` at the top!");
                 return;
             }
@@ -671,11 +671,8 @@ namespace BinguBot.Commands
         {
             if (Uri.TryCreate(search, UriKind.Absolute, out var result))
             {
-                Bot.LogDebug("Made Uri from Search");
-                if (search.Contains("spotify"))
-                {
-                    return await node.Rest.GetTracksAsync(await GetSpotifyAsync(result));
-                }
+                Bot.LogDebug("Uri Found in \"search\" parameter");
+                //if (search.Contains("spotify")) { return await node.Rest.GetTracksAsync(await GetSpotifyAsync(result)); }
                 return await node.Rest.GetTracksAsync(result);
             }
             
