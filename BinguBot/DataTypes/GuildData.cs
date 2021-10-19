@@ -20,7 +20,7 @@ namespace BinguBot.DataTypes
         public GuildData(List<QueuedTrack> GuildQueue)
         {
             this.GuildQueue = GuildQueue;
-            this.GuildHistory = 
+            this.GuildHistory = new List<LavalinkTrack>(); 
         }
     }
 }

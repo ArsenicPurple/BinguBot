@@ -137,8 +137,13 @@ namespace BinguBot.Commands
                 builder.AppendLine();
             }
 
+            var embed = new DiscordEmbedBuilder() {
+                Title = "Queue\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                Color = DiscordColor.Turquoise
+            };
+
             var interactiviy = Bot.Client.GetExtension<InteractivityExtension>();
-            var pages = interactiviy.GeneratePagesInEmbed(builder.ToString(), DSharpPlus.Interactivity.Enums.SplitType.Line);
+            var pages = interactiviy.GeneratePagesInEmbed(builder.ToString(), DSharpPlus.Interactivity.Enums.SplitType.Line, embed);
             await interactiviy.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
         }
 
@@ -156,16 +161,23 @@ namespace BinguBot.Commands
 
             var list = Data[key].GuildHistory;
             StringBuilder builder = new StringBuilder();
-            for (int i = 1; i < Data[key].GuildQueue.Count + 1; i++)
+            int count = Data[key].GuildHistory.Count;
+            for (int i = 0; i < count; i++)
             {
-                builder.Append(i);
+                builder.Append(count - i);
                 builder.Append(": ");
-                builder.Append(list[i - 1].Title);
+                builder.Append(list[i].Title);
                 builder.AppendLine();
             }
 
+            var embed = new DiscordEmbedBuilder()
+            {
+                Title = "History\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                Color = DiscordColor.Turquoise
+            };
+
             var interactiviy = Bot.Client.GetExtension<InteractivityExtension>();
-            var pages = interactiviy.GeneratePagesInEmbed(builder.ToString(), DSharpPlus.Interactivity.Enums.SplitType.Line);
+            var pages = interactiviy.GeneratePagesInEmbed(builder.ToString(), DSharpPlus.Interactivity.Enums.SplitType.Line, embed);
             await interactiviy.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
         }
 
@@ -199,7 +211,6 @@ namespace BinguBot.Commands
         public async Task Clear(CommandContext ctx)
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
-
             var key = ctx.Guild.Id;
             LavalinkGuildConnection conn;
             if ((conn = GetConnection(ctx).Item2) == null)
@@ -207,12 +218,19 @@ namespace BinguBot.Commands
                 await ctx.RespondAsync("You are not in a voice channel or Bingu had an oopsie");
                 return;
             }
-
             await conn.PauseAsync();
             Data[key].GuildQueue.Clear();
             await conn.StopAsync();
-
             await ctx.RespondAsync("Cleared the queue");
+        }
+
+        [Command("clearhistory"), Aliases("ch")]
+        public async Task ClearHistory(CommandContext ctx)
+        {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+            var key = ctx.Guild.Id;
+            Data[key].GuildHistory.Clear();
+            await ctx.RespondAsync("Cleared the history");
         }
 
         /// <summary>
@@ -342,7 +360,7 @@ namespace BinguBot.Commands
 
             if (IsPlaying(conn))
             {
-                Data[key].GuildQueue.Prepend(new QueuedTrack(track, ctx));
+                Data[key].GuildQueue.Insert(0, new QueuedTrack(track, ctx));
                 await ctx.RespondAsync($"Queued `{track.Title}` at the top!");
                 return;
             }
@@ -584,8 +602,7 @@ namespace BinguBot.Commands
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
             var key = ctx.Guild.Id;
-            var random = new Random();
-            Data[key].GuildQueue.OrderBy(track => random.Next());
+            Data[key].GuildQueue = Data[key].GuildQueue.OrderBy(track => Guid.NewGuid()).ToList();
             await ctx.RespondAsync("Shuffled the queue!");
         }
 
