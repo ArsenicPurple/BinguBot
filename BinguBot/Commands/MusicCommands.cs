@@ -142,6 +142,33 @@ namespace BinguBot.Commands
             await interactiviy.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
         }
 
+        [Command("history"), Aliases("h")]
+        public async Task History(CommandContext ctx)
+        {
+            await ctx.Channel.DeleteMessageAsync(ctx.Message);
+
+            var key = ctx.Guild.Id;
+            if (HistoryIsEmpty(key))
+            {
+                await ctx.RespondAsync("There is nothing in the history");
+                return;
+            }
+
+            var list = Data[key].GuildHistory;
+            StringBuilder builder = new StringBuilder();
+            for (int i = 1; i < Data[key].GuildQueue.Count + 1; i++)
+            {
+                builder.Append(i);
+                builder.Append(": ");
+                builder.Append(list[i - 1].Title);
+                builder.AppendLine();
+            }
+
+            var interactiviy = Bot.Client.GetExtension<InteractivityExtension>();
+            var pages = interactiviy.GeneratePagesInEmbed(builder.ToString(), DSharpPlus.Interactivity.Enums.SplitType.Line);
+            await interactiviy.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
+        }
+
         /// <summary>
         /// Skips the currently playing track and plays the next track in the Queue. Stops player is the is nothing in the Queue.
         /// </summary>
@@ -556,24 +583,9 @@ namespace BinguBot.Commands
         public async Task Shuffle(CommandContext ctx)
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
-
             var key = ctx.Guild.Id;
-            var list = Data[key].GuildQueue;
-
-            RNGCryptoServiceProvider provider = new RNGCryptoServiceProvider();
-            int n = list.Count;
-            while (n > 1)
-            {
-                byte[] box = new byte[1];
-                do provider.GetBytes(box);
-                while (!(box[0] < n * (Byte.MaxValue / n)));
-                int k = (box[0] % n);
-                n--;
-                var value = list[k];
-                list[k] = list[n];
-                list[n] = value;
-            }
-
+            var random = new Random();
+            Data[key].GuildQueue.OrderBy(track => random.Next());
             await ctx.RespondAsync("Shuffled the queue!");
         }
 
@@ -698,6 +710,7 @@ namespace BinguBot.Commands
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
         {
             var key = sender.Guild.Id;
+            Data[key].GuildHistory.Add(e.Track);
             if (Data[key].IsLooping) { await sender.PlayAsync(e.Track); return; }
             if (QueueIsEmpty(key))
             {
@@ -720,7 +733,7 @@ namespace BinguBot.Commands
         {
             foreach(var (key, _) in e.Guilds)
             {
-                Data.Add(key, new GuildData(new List<QueuedTrack>(), false));
+                Data.Add(key, new GuildData(new List<QueuedTrack>()));
             }
 
             e.Handled = true;
@@ -766,6 +779,11 @@ namespace BinguBot.Commands
         private bool QueueIsEmpty(ulong key)
         {
             return Data[key].GuildQueue.Count == 0;
+        }
+
+        private bool HistoryIsEmpty(ulong key)
+        {
+            return Data[key].GuildHistory.Count == 0;
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿using DSharpPlus.Entities;
+using DSharpPlus.Lavalink;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,14 +11,16 @@ namespace BinguBot.DataTypes
     class GuildData
     {
         public List<QueuedTrack> GuildQueue;
+        public List<LavalinkTrack> GuildHistory;
+        public List<List<string>> SavedQueues;
         public bool IsLooping;
         public DateTime TimeIdle;
         public DiscordChannel CommandChannel;
 
-        public GuildData(List<QueuedTrack> GuildQueue, bool IsLooping)
+        public GuildData(List<QueuedTrack> GuildQueue)
         {
             this.GuildQueue = GuildQueue;
-            this.IsLooping = IsLooping;
+            this.GuildHistory = 
         }
     }
 }
