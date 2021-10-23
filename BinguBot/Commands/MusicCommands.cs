@@ -29,7 +29,7 @@ namespace BinguBot.Commands
     class MusicCommands : BaseCommandModule
     {
         public static Dictionary<ulong, GuildData> Data = new Dictionary<ulong, GuildData>();
-        
+
         public MusicCommands()
         {
             Bot.Client.GuildDownloadCompleted += GuildDownloadCompleted;
@@ -43,7 +43,7 @@ namespace BinguBot.Commands
         /// <param name="ctx"></param>
         /// <returns></returns>
         [Command("join")]
-        public async Task Join(CommandContext ctx) 
+        public async Task Join(CommandContext ctx)
         {
             await ctx.Channel.DeleteMessageAsync(ctx.Message);
 
@@ -119,7 +119,7 @@ namespace BinguBot.Commands
                 await ctx.RespondAsync("There is nothing in the queue");
                 return;
             }
-            
+
             var list = Data[key].GuildQueue;
             StringBuilder builder = new StringBuilder();
             builder.Append($"Playing: {conn.CurrentState.CurrentTrack.Title}");
@@ -179,6 +179,39 @@ namespace BinguBot.Commands
             var interactiviy = Bot.Client.GetExtension<InteractivityExtension>();
             var pages = interactiviy.GeneratePagesInEmbed(builder.ToString(), DSharpPlus.Interactivity.Enums.SplitType.Line, embed);
             await interactiviy.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
+        }
+
+        [Command("save"), Aliases("sq")]
+        public async Task Save(CommandContext ctx, [RemainingText] string name)
+        {
+            var key = ctx.Guild.Id;
+            var interactiviy = Bot.Client.GetExtension<InteractivityExtension>();
+
+            await ctx.RespondAsync("Would you like the save the queue history too?\n**(y/n)**");
+            var result = await interactiviy.WaitForMessageAsync(message => message.Author.Id == ctx.User.Id && IsAnswer(message), TimeSpan.FromSeconds(15));
+            if (result.TimedOut) { await ctx.RespondAsync("Your answer took to long, the action has been cancelled"); return; }
+
+            List<string> copiedQueue = new List<string>();
+            if (GetAnswer(result.Result))
+            {
+                copiedQueue = Data[key].GuildHistory.ConvertAll(track => track.Title);
+            }
+            copiedQueue.AddRange(Data[key].GuildQueue.ConvertAll(qtrack => qtrack.Track.Title));
+
+
+
+            Data[key].SavedQueues.Add(name.ToLower(), copiedQueue);
+            await ctx.RespondAsync("Queue Saved!");
+        }
+
+        //[Command("edit"), Aliases("eq")]
+        //public async Task Edit(CommandContext ctx, string mode) {}
+
+        [Command("load"), Aliases("lq")]
+        public async Task Load(CommandContext ctx, [RemainingText] string name)
+        {
+            var key = ctx.Guild.Id;
+            Data[key].SavedQueues[name]
         }
 
         /// <summary>
@@ -727,8 +760,8 @@ namespace BinguBot.Commands
         private async Task PlaybackFinished(LavalinkGuildConnection sender, DSharpPlus.Lavalink.EventArgs.TrackFinishEventArgs e)
         {
             var key = sender.Guild.Id;
-            Data[key].GuildHistory.Add(e.Track);
             if (Data[key].IsLooping) { await sender.PlayAsync(e.Track); return; }
+            Data[key].GuildHistory.Add(e.Track);
             if (QueueIsEmpty(key))
             {
                 Data[key].TimeIdle = DateTime.Now;
@@ -811,6 +844,26 @@ namespace BinguBot.Commands
         private string GetThumbnailUri(Uri uri)
         {
             return $"http://img.youtube.com/vi/{uri.Query.Substring(3)}/0.jpg";
+        }
+
+        private bool IsAnswer(DiscordMessage message)
+        {
+            return (message.Content.ToLower()) switch
+            {
+                "y" => true,
+                "n" => true,
+                _ => false,
+            };
+        }
+
+        private bool GetAnswer(DiscordMessage message)
+        {
+            return (message.Content.ToLower()) switch
+            {
+                "y" => true,
+                "n" => false,
+                _ => false,
+            };
         }
 
         public async Task<string> GetSpotifyAsync(Uri uri)

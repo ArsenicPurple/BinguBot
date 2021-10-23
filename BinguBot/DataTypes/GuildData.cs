@@ -12,7 +12,7 @@ namespace BinguBot.DataTypes
     {
         public List<QueuedTrack> GuildQueue;
         public List<LavalinkTrack> GuildHistory;
-        public List<List<string>> SavedQueues;
+        public Dictionary<string, List<string>> SavedQueues;
         public bool IsLooping;
         public DateTime TimeIdle;
         public DiscordChannel CommandChannel;
